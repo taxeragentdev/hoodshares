@@ -4,8 +4,16 @@ import { getAddress } from "viem";
 import type { PlayerRecord } from "@/lib/player";
 import { formatTicketSerial, parseTicketSerial } from "@/lib/ticket";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const STORE_PATH = path.join(DATA_DIR, "players.json");
+function dataDir(): string {
+  if (process.env.HOODSHARES_DATA_DIR) return process.env.HOODSHARES_DATA_DIR;
+  // Vercel’s app filesystem is read-only. Local `data/` works in `next dev`.
+  if (process.env.VERCEL) return path.join("/tmp", "hoodshares");
+  return path.join(process.cwd(), "data");
+}
+
+function storePath(): string {
+  return path.join(dataDir(), "players.json");
+}
 
 export interface SessionQuoteBook {
   sessionId: string;
@@ -35,7 +43,7 @@ let queue: Promise<unknown> = Promise.resolve();
 
 async function readFileStore(): Promise<StoreFile> {
   try {
-    const raw = await readFile(STORE_PATH, "utf8");
+    const raw = await readFile(storePath(), "utf8");
     const parsed = JSON.parse(raw) as StoreFile;
     return {
       nonces: parsed.nonces ?? {},
@@ -49,10 +57,12 @@ async function readFileStore(): Promise<StoreFile> {
 }
 
 async function writeFileStore(store: StoreFile): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true });
-  const tmp = `${STORE_PATH}.${process.pid}.tmp`;
+  const dir = dataDir();
+  const dest = storePath();
+  await mkdir(dir, { recursive: true });
+  const tmp = `${dest}.${process.pid}.tmp`;
   await writeFile(tmp, JSON.stringify(store), "utf8");
-  await rename(tmp, STORE_PATH);
+  await rename(tmp, dest);
 }
 
 async function readStore(): Promise<StoreFile> {

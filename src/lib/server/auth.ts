@@ -1,7 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { getAddress, isAddress, verifyMessage } from "viem";
-import { withStore } from "./store";
 
 const COOKIE = "hs_session";
 const MAX_AGE_SEC = 60 * 60 * 24 * 30;
@@ -31,13 +30,10 @@ export function signInMessage(address: string, nonce: string): string {
 }
 
 export async function issueNonce(address: `0x${string}`): Promise<string> {
-  const nonce = randomBytes(16).toString("hex");
   const exp = Date.now() + 10 * 60 * 1000;
-  const key = address.toLowerCase();
-  await withStore((store) => {
-    store.nonces[key] = { nonce, exp };
-  });
-  return nonce;
+  const rand = randomBytes(16).toString("hex");
+  const payload = `${address.toLowerCase()}.${exp}.${rand}`;
+  return `${payload}.${hmac(payload)}`;
 }
 
 export function encodeSession(address: `0x${string}`): string {
@@ -82,24 +78,35 @@ export async function sessionAddress(): Promise<`0x${string}` | null> {
   return decodeSession(jar.get(COOKIE)?.value);
 }
 
+function parseIssuedNonce(
+  address: `0x${string}`,
+  nonce: string,
+): boolean {
+  const parts = nonce.split(".");
+  if (parts.length !== 4) return false;
+  const [rawAddress, expRaw, rand, sig] = parts;
+  if (!rawAddress || !expRaw || !rand || !sig) return false;
+  if (rawAddress !== address.toLowerCase()) return false;
+  const exp = Number(expRaw);
+  if (!Number.isFinite(exp) || exp < Date.now()) return false;
+  const payload = `${rawAddress}.${expRaw}.${rand}`;
+  const expected = hmac(payload);
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+  return true;
+}
+
 export async function verifySignIn(
   address: `0x${string}`,
   nonce: string,
   signature: `0x${string}`,
 ): Promise<boolean> {
-  const key = address.toLowerCase();
-  const row = await withStore((store) => store.nonces[key] ?? null);
-  if (!row || row.nonce !== nonce || row.exp < Date.now()) return false;
+  if (!parseIssuedNonce(address, nonce)) return false;
 
-  const ok = await verifyMessage({
+  return verifyMessage({
     address,
     message: signInMessage(address, nonce),
     signature,
   });
-  if (!ok) return false;
-
-  await withStore((store) => {
-    if (store.nonces[key]?.nonce === nonce) delete store.nonces[key];
-  });
-  return true;
 }
