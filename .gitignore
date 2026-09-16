@@ -1,0 +1,58 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# player inventory, lineups, and scores — per-wallet, not source
+/data/players.json
+/data/*.tmp
+
+# allowlist source data — the generated proofs file is what ships, this
+# raw list is just the internal working input to scripts/build-allowlist.mjs
+/data/allowlist.json
+/allowlist-root.txt
+
+# same story for the PFP claim tree — real per-token rarities only exist
+# once the PFP drop (deployed elsewhere) actually reveals
+/data/pfp-rarities.json
+/pfp-claim-root.txt
+# intermediate, deterministic from src/data/pfp-tier-shares.json — regenerate
+# with `npm run pfp:assign-tiers` rather than committing it
+/data/pfp-asset-tiers.generated.json
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

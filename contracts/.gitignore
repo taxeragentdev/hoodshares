@@ -1,0 +1,10 @@
+# Foundry build artifacts
+cache/
+out/
+broadcast/
+
+# lib/ is fetched via `forge install` — do not commit vendored dependencies
+lib/
+
+# Environment
+.env

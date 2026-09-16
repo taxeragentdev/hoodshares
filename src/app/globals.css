@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+@theme {
+  /* Surfaces — layered dark greys instead of pure black so card edges and
+     shadows stay visible on OLED displays. */
+  --color-void: #050505;
+  --color-surface: #0b0b0b;
+  --color-surface-2: #131313;
+  --color-surface-3: #1c1c1c;
+  --color-line: #242424;
+  --color-line-bright: #3a3a3a;
+
+  /* Accent — reserved exclusively for actions and brand moments.
+     Never used as a rarity colour, to keep the two languages separate. */
+  --color-acid: #ccff00;
+  --color-acid-dim: #9cc400;
+  --color-acid-deep: #2f3d00;
+
+  /* Text */
+  --color-ink: #fafafa;
+  --color-ink-2: #a3a3a3;
+  --color-ink-3: #6a6a6a;
+
+  /* Market direction */
+  --color-up: #00e08f;
+  --color-down: #ff4d4d;
+
+  /* Rarity scale — common to mythic */
+  --color-common: #9aa0a6;
+  --color-rare: #38bdf8;
+  --color-epic: #a855f7;
+  --color-legendary: #fbbf24;
+  --color-mythic: #ff3d8b;
+
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --radius-card: 1.125rem;
+
+  --animate-marquee: marquee 42s linear infinite;
+  --animate-glow: glow 3.5s ease-in-out infinite;
+  --animate-holo: holo 6s linear infinite;
+  --animate-rise: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pack-idle: pack-idle 4.5s ease-in-out infinite;
+  --animate-pack-foil: pack-foil 5.5s linear infinite;
+  --animate-pack-cards: pack-cards 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pack-settle: pack-settle 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pack-flash: pack-flash 0.55s ease-out both;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+@keyframes holo {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pack-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pack-foil {
+  0% {
+    background-position: -40% 40%;
+  }
+  100% {
+    background-position: 140% 60%;
+  }
+}
+
+@keyframes pack-cards {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pack-settle {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pack-flash {
+  0% {
+    opacity: 0.85;
+    background: radial-gradient(
+      circle at 50% 38%,
+      rgba(204, 255, 0, 0.5) 0%,
+      rgba(255, 255, 255, 0.16) 28%,
+      transparent 62%
+    );
+  }
+  100% {
+    opacity: 0;
+    background: radial-gradient(
+      circle at 50% 38%,
+      rgba(204, 255, 0, 0) 0%,
+      transparent 62%
+    );
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures keep price columns from shifting as digits change. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+::selection {
+  background-color: var(--color-acid);
+  color: #000;
+}
+
+.animate-pack-foil {
+  background-image: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.18) 46%,
+    rgba(204, 255, 0, 0.16) 50%,
+    rgba(255, 255, 255, 0.12) 54%,
+    transparent 70%
+  );
+  background-size: 220% 220%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

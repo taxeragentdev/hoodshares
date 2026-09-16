@@ -1,0 +1,11 @@
+{
+  "name": "HoodPass",
+  "description": "Season 01 HoodPass. Holding this pass lets you buy packs and play Daily Lineup. It is a collectible, not a claim on any stock.",
+  "image": "/hoodpass.png",
+  "external_url": "/",
+  "attributes": [
+    { "trait_type": "Season", "value": "01" },
+    { "trait_type": "Access", "value": "HoodPass" },
+    { "trait_type": "Network", "value": "Robinhood Chain" }
+  ]
+}
