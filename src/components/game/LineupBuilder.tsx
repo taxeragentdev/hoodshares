@@ -17,6 +17,7 @@ interface LineupBuilderProps {
   startEnabled?: boolean;
   startBusy?: boolean;
   hint?: string;
+  bare?: boolean;
 }
 
 export function LineupBuilder({
@@ -30,6 +31,7 @@ export function LineupBuilder({
   startEnabled = true,
   startBusy = false,
   hint,
+  bare = false,
 }: LineupBuilderProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const isFull = lineup.length >= LINEUP_SIZE;
@@ -79,15 +81,17 @@ export function LineupBuilder({
 
   return (
     <div>
-      <div className="border-line bg-surface-2 rounded-2xl border p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-ink text-sm font-bold tracking-wide uppercase">
-            Your hand
-          </h2>
-          <span className="text-ink-3 font-mono text-xs">
-            {lineup.length}/{LINEUP_SIZE}
-          </span>
-        </div>
+      <div className={bare ? "" : "border-line bg-surface-2 rounded-2xl border p-5"}>
+        {!bare && (
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-display text-ink text-sm font-bold tracking-wide uppercase">
+              Your hand
+            </h2>
+            <span className="text-ink-3 font-mono text-xs">
+              {lineup.length}/{LINEUP_SIZE}
+            </span>
+          </div>
+        )}
 
         <div className="grid grid-cols-5 gap-2 sm:gap-3">
           {Array.from({ length: LINEUP_SIZE }).map((_, i) => {
@@ -107,8 +111,13 @@ export function LineupBuilder({
                   >
                     +
                   </span>
-                  <span className="font-mono text-[10px] tracking-[0.18em] uppercase">
-                    Add
+                  <span className="text-center">
+                    <span className="block font-mono text-[10px] tracking-[0.14em] uppercase">
+                      Add card
+                    </span>
+                    <span className="text-ink-3 mt-1 block text-[10px] leading-snug normal-case tracking-normal">
+                      Select from inventory
+                    </span>
                   </span>
                 </button>
               );

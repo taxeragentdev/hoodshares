@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { EMPTY_INVENTORY, type Inventory } from "@/lib/inventory";
 import { parseAddress, setSessionCookie, verifySignIn } from "@/lib/server/auth";
-import { expireActivePlay, snapshot } from "@/lib/server/play";
+import { snapshot, syncPlayState } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
 import { ensurePlayer, withStore } from "@/lib/server/store";
 
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       } else if (!record.inventory.cards) {
         record.inventory = EMPTY_INVENTORY;
       }
-      expireActivePlay(record, book);
+      syncPlayState(record, book);
       return snapshot(record);
     });
 

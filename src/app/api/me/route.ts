@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sessionAddress } from "@/lib/server/auth";
-import { expireActivePlay, snapshot } from "@/lib/server/play";
+import { snapshot, syncPlayState } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
 import { ensurePlayer, withStore } from "@/lib/server/store";
 
@@ -12,7 +12,7 @@ export async function GET() {
   const book = await sessionQuotes();
   const player = await withStore((store) => {
     const record = ensurePlayer(store, address);
-    expireActivePlay(record, book);
+    syncPlayState(record, book);
     return snapshot(record);
   });
   return NextResponse.json(player);

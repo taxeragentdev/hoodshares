@@ -117,6 +117,7 @@ export function emptyPlayer(address: `0x${string}`): PlayerRecord {
     includedPackClaimed: false,
     inventory: { packs: 0, cards: {} },
     play: null,
+    nextPlay: null,
     results: [],
   };
 }
@@ -130,6 +131,7 @@ export function ensurePlayer(store: StoreFile, address: `0x${string}`): PlayerRe
     existing.ticketSerial = existing.ticketSerial ?? null;
     existing.freePackAvailable = Boolean(existing.freePackAvailable);
     existing.includedPackClaimed = Boolean(existing.includedPackClaimed);
+    existing.nextPlay = existing.nextPlay ?? null;
     return existing;
   }
   const created = emptyPlayer(address);

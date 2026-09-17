@@ -12,6 +12,7 @@ interface ActiveRoundProps {
   timeLeftLabel: string;
   onLock: (slotId: string) => void;
   lockingSlotId?: string | null;
+  embedded?: boolean;
 }
 
 export function ActiveRound({
@@ -21,6 +22,7 @@ export function ActiveRound({
   timeLeftLabel,
   onLock,
   lockingSlotId = null,
+  embedded = false,
 }: ActiveRoundProps) {
   const cardIds = lineup.map((pick) => pick.cardId);
 
@@ -38,17 +40,24 @@ export function ActiveRound({
 
   return (
     <div>
-      <div className="text-center">
-        <span className="bg-acid/15 text-acid rounded-full px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] uppercase">
-          Daily Lineup
-        </span>
-        <h2 className="font-display text-ink mt-3 text-2xl font-bold tracking-wide uppercase">
-          Session live
-        </h2>
-        <p className="text-ink-3 mt-1 font-mono text-sm tabular">
+      {!embedded && (
+        <div className="text-center">
+          <span className="bg-acid/15 text-acid rounded-full px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] uppercase">
+            Daily Lineup
+          </span>
+          <h2 className="font-display text-ink mt-3 text-2xl font-bold tracking-wide uppercase">
+            Session live
+          </h2>
+          <p className="text-ink-3 mt-1 font-mono text-sm tabular">
+            {timeLeftLabel} to the close, {lockedCount}/{lineup.length} locked
+          </p>
+        </div>
+      )}
+      {embedded && (
+        <p className="text-ink-3 -mt-2 mb-4 font-mono text-sm tabular">
           {timeLeftLabel} to the close, {lockedCount}/{lineup.length} locked
         </p>
-      </div>
+      )}
 
       <div className="bg-surface-3 mx-auto mt-5 h-1 max-w-md overflow-hidden rounded-full">
         <div

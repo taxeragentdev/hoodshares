@@ -8,6 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { LineupBuilder } from "@/components/game/LineupBuilder";
 import { ActiveRound } from "@/components/game/ActiveRound";
 import { RoundSummary } from "@/components/game/RoundSummary";
+import { RoundSection } from "@/components/game/RoundSection";
 import { api } from "@/lib/api";
 import type { LeaderboardRow } from "@/lib/game/leaderboard";
 import {
@@ -18,8 +19,8 @@ import {
   SESSION_LABEL,
   type SessionPhase,
 } from "@/lib/game/session";
-import { sessionId } from "@/lib/game/sessionId";
-import { LINEUP_SIZE, type LineupPick, type RoundPhase } from "@/lib/game/types";
+import { formatSessionLabel, nextSessionId, sessionId } from "@/lib/game/sessionId";
+import { LINEUP_SIZE, type LineupPick } from "@/lib/game/types";
 import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 
 function formatTimeLeft(msLeft: number): string {
@@ -49,10 +50,7 @@ function pctFromBook(
 
 export default function PlayPage() {
   const { inventory, player, signedIn, savePlay, settlePlay } = useAuth();
-  const [phase, setPhase] = useState<RoundPhase>("building");
   const [lineup, setLineup] = useState<LineupPick[]>([]);
-  const [roundId, setRoundId] = useState("");
-  const [roundNumber, setRoundNumber] = useState(1);
   const [progress, setProgress] = useState(0);
   const [market, setMarket] = useState<SessionPhase>("closed");
   const [clockLabel, setClockLabel] = useState<string | null>(null);
@@ -68,9 +66,20 @@ export default function PlayPage() {
   const restored = useRef(false);
 
   const today = sessionId();
+  const upcoming = nextSessionId();
+  const activePlay =
+    player?.play && player.play.roundId === today && player.play.lineup.length >= LINEUP_SIZE
+      ? player.play
+      : null;
+  const activeLive = Boolean(activePlay && market === "open" && activePlay.phase !== "settled");
+  const activeSettled = Boolean(activePlay && (activePlay.phase === "settled" || market !== "open"));
+  const activeNumber = player?.play?.roundNumber ?? 1;
+  const nextNumber = player?.nextPlay?.roundNumber ?? activeNumber + 1;
+
   const moves = useMemo(() => {
     const next: Record<string, number | null> = {};
-    for (const pick of lineup) {
+    if (!activePlay) return next;
+    for (const pick of activePlay.lineup) {
       next[pick.cardId] = pctFromBook(
         pick.cardId,
         pick.lockedUsd,
@@ -80,7 +89,7 @@ export default function PlayPage() {
       );
     }
     return next;
-  }, [lineup, live, openPx, closePx]);
+  }, [activePlay, live, openPx, closePx]);
 
   useEffect(() => {
     function tick() {
@@ -98,36 +107,22 @@ export default function PlayPage() {
     if (!signedIn) {
       restored.current = false;
       setHydrated(false);
+      setLineup([]);
       return;
     }
+    if (!player) return;
     if (restored.current) return;
     restored.current = true;
-    const play = player?.play;
-    if (play) {
-      setPhase(play.phase);
-      setLineup(play.lineup);
-      setRoundId(play.roundId);
-      setRoundNumber(play.roundNumber || 1);
-      slotCounter.current = play.slotCounter || 0;
+    const queued = player.nextPlay;
+    if (queued) {
+      setLineup(queued.lineup);
+      slotCounter.current = queued.slotCounter || 0;
     }
     setHydrated(true);
   }, [signedIn, player]);
 
   useEffect(() => {
-    if (!hydrated || lineup.length < LINEUP_SIZE) return;
-    if (market === "open" && phase === "building" && (roundId === today || !roundId)) {
-      setRoundId(today);
-      setPhase("active");
-    }
-    if ((market === "closed" || market === "weekend") && phase !== "settled") {
-      if (lineup.length >= LINEUP_SIZE && (roundId === today || phase === "active")) {
-        setPhase("settled");
-      }
-    }
-  }, [hydrated, market, phase, lineup.length, roundId, today]);
-
-  useEffect(() => {
-    if (phase !== "active" && phase !== "settled") return;
+    if (!activePlay) return;
     let cancelled = false;
     async function loadQuotes() {
       try {
@@ -149,10 +144,10 @@ export default function PlayPage() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [phase]);
+  }, [activePlay]);
 
   useEffect(() => {
-    if (phase !== "settled" || !player?.address) return;
+    if (!activeSettled || !player?.address) return;
     let cancelled = false;
     void api<{ board: LeaderboardRow[] }>("/api/leaderboard")
       .then((data) => {
@@ -166,17 +161,16 @@ export default function PlayPage() {
     return () => {
       cancelled = true;
     };
-  }, [phase, player?.address]);
+  }, [activeSettled, player?.address]);
 
   useEffect(() => {
-    if (phase !== "settled" || !signedIn) return;
+    if (!activeSettled || !signedIn) return;
     void settlePlay().catch(() => undefined);
-  }, [phase, signedIn, settlePlay]);
+  }, [activeSettled, signedIn, settlePlay]);
 
-  const savedLineup = player?.play?.lineup ?? [];
-  const lineupDirty =
-    JSON.stringify(lineup) !== JSON.stringify(savedLineup);
-  const alreadySaved = Boolean(player?.play && player.play.roundId === (roundId || today));
+  const savedLineup = player?.nextPlay?.lineup ?? [];
+  const lineupDirty = JSON.stringify(lineup) !== JSON.stringify(savedLineup);
+  const alreadySaved = Boolean(player?.nextPlay && player.nextPlay.roundId === upcoming);
 
   function handleAdd(cardId: string) {
     if (lineup.length >= LINEUP_SIZE) return;
@@ -203,21 +197,20 @@ export default function PlayPage() {
     );
   }
 
-  async function handleLockLineup() {
+  async function handleSaveNext() {
     setSignError(null);
     setSaving(true);
     const nextPlay = {
       phase: "building" as const,
       lineup,
-      roundId: today,
-      roundNumber,
+      roundId: upcoming,
+      roundNumber: nextNumber,
       startedAt: 0,
       slotCounter: slotCounter.current,
     };
     try {
       const next = await savePlay(nextPlay, { intent: "save" });
-      setRoundId(today);
-      if (next.play) setLineup(next.play.lineup);
+      if (next.nextPlay) setLineup(next.nextPlay.lineup);
     } catch (err) {
       setSignError(err instanceof Error ? err.message : "Could not save this lineup");
     } finally {
@@ -226,25 +219,22 @@ export default function PlayPage() {
   }
 
   async function handleLock(slotId: string) {
+    if (!activePlay) return;
     const at = sessionProgress();
-    const nextLineup = lineup.map((pick) =>
+    const nextLineup = activePlay.lineup.map((pick) =>
       pick.slotId === slotId ? { ...pick, locked: true, lockedAtProgress: at } : pick,
     );
     setSignError(null);
     setLockingSlotId(slotId);
     try {
-      const next = await savePlay(
+      await savePlay(
         {
+          ...activePlay,
           phase: "active",
           lineup: nextLineup,
-          roundId: roundId || today,
-          roundNumber,
-          startedAt: 0,
-          slotCounter: slotCounter.current,
         },
         { intent: "lock", lockedSlotId: slotId },
       );
-      setLineup(next.play?.lineup ?? nextLineup);
     } catch (err) {
       setSignError(err instanceof Error ? err.message : "Could not lock this card");
     } finally {
@@ -252,33 +242,20 @@ export default function PlayPage() {
     }
   }
 
-  function handlePlayAgain() {
-    setPhase("building");
-    setLineup([]);
-    setRoundId("");
-    setProgress(0);
-    setRank(null);
-    setRoundNumber((current) => current + 1);
+  function activeEmptyCopy() {
+    if (market === "open") {
+      return "This session is live. You cannot add or remove cards here. Lock a card to bank the move, or wait for the close. Set the next round below.";
+    }
+    if (market === "preopen") {
+      return "No live session yet. The round below plays at 09:30 ET. Once it opens you can only lock.";
+    }
+    if (market === "weekend") {
+      return "Market closed for the weekend. Set the next round below for Monday.";
+    }
+    return "This session is over. Set the next round below.";
   }
 
-  const canEdit = market === "preopen" && phase !== "settled";
-  const showBuilder = hydrated && canEdit;
-  const showLive =
-    hydrated &&
-    phase === "active" &&
-    market === "open" &&
-    lineup.length >= LINEUP_SIZE;
-  const showSettled = hydrated && phase === "settled";
-  const missedOpen =
-    hydrated &&
-    market === "open" &&
-    lineup.length < LINEUP_SIZE &&
-    phase !== "settled";
-  const closedNoLineup =
-    hydrated &&
-    (market === "closed" || market === "weekend") &&
-    phase !== "settled" &&
-    lineup.length < LINEUP_SIZE;
+  const displayNextNumber = player?.nextPlay?.roundNumber ?? nextNumber;
 
   return (
     <>
@@ -300,11 +277,10 @@ export default function PlayPage() {
             {clockLabel ?? "\u00a0"}
           </p>
           <p className="text-ink-2 mx-auto mt-3 max-w-xl text-sm leading-relaxed">
-            Five stock cards from your packs, each called up or down. Each
-            round is {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} from Season 1. Score is
-            that name&apos;s percent move from the 09:30 ET open times 100.
-            Save the lineup with a signature. Lock a card the same way to bank
-            it early, or take the 16:00 ET close.
+            The live round is locked except for the lock button. Build the next
+            round anytime. Each round is {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} from
+            Season 1. Score is that name&apos;s percent move from the 09:30 ET
+            open times 100.
           </p>
         </div>
 
@@ -318,69 +294,69 @@ export default function PlayPage() {
             </p>
           )}
 
-          {showBuilder && (
-            <LineupBuilder
-              lineup={lineup}
-              owned={inventory.cards}
-              onAdd={handleAdd}
-              onRemove={handleRemove}
-              onToggleDirection={handleToggleDirection}
-              onStart={() => void handleLockLineup()}
-              startLabel={
-                alreadySaved && !lineupDirty ? "Lineup saved" : lineupDirty && alreadySaved ? "Save changes" : "Save lineup"
-              }
-              startEnabled={lineupDirty || !alreadySaved}
-              startBusy={saving}
-              hint={`Each round is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL}. Your wallet signs this lineup. Change a card or a call and save again.`}
-            />
-          )}
+          {hydrated && (
+            <div className="space-y-6">
+              <RoundSection label="Active round" number={activeNumber}>
+                {activeLive && activePlay ? (
+                  <ActiveRound
+                    embedded
+                    lineup={activePlay.lineup}
+                    moves={moves}
+                    progress={progress}
+                    timeLeftLabel={formatTimeLeft(msUntilSessionClose())}
+                    onLock={(slotId) => void handleLock(slotId)}
+                    lockingSlotId={lockingSlotId}
+                  />
+                ) : activeSettled && activePlay ? (
+                  <RoundSummary
+                    embedded
+                    lineup={activePlay.lineup}
+                    moves={moves}
+                    rank={rank}
+                  />
+                ) : (
+                  <div>
+                    <div className="grid grid-cols-5 gap-2 sm:gap-3">
+                      {Array.from({ length: LINEUP_SIZE }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="border-line/60 aspect-[5/8] rounded-xl border border-dashed"
+                        />
+                      ))}
+                    </div>
+                    <p className="text-ink-2 mt-4 max-w-xl text-sm leading-relaxed">
+                      {activeEmptyCopy()}
+                    </p>
+                  </div>
+                )}
+              </RoundSection>
 
-          {showLive && (
-            <ActiveRound
-              lineup={lineup}
-              moves={moves}
-              progress={progress}
-              timeLeftLabel={formatTimeLeft(msUntilSessionClose())}
-              onLock={(slotId) => void handleLock(slotId)}
-              lockingSlotId={lockingSlotId}
-            />
-          )}
-
-          {showSettled && (
-            <RoundSummary
-              lineup={lineup}
-              moves={moves}
-              rank={rank}
-              canPlayAgain={market === "preopen"}
-              onPlayAgain={handlePlayAgain}
-            />
-          )}
-
-          {missedOpen && (
-            <ClosedPanel
-              title="Lineups are locked"
-              body="Calls lock at the 09:30 ET open. Come back before the next open and set five cards."
-            />
-          )}
-
-          {closedNoLineup && (
-            <ClosedPanel
-              title={market === "weekend" ? "Market closed for the weekend" : "Session settled"}
-              body="Daily Lineup runs 09:30 to 16:00 ET on weekdays. Set five calls before the next open."
-            />
+              <RoundSection label="Next round" number={displayNextNumber}>
+                <LineupBuilder
+                  bare
+                  lineup={lineup}
+                  owned={inventory.cards}
+                  onAdd={handleAdd}
+                  onRemove={handleRemove}
+                  onToggleDirection={handleToggleDirection}
+                  onStart={() => void handleSaveNext()}
+                  startLabel={
+                    alreadySaved && !lineupDirty
+                      ? "Lineup saved"
+                      : lineupDirty && alreadySaved
+                        ? "Save changes"
+                        : "Save picks"
+                  }
+                  startEnabled={lineupDirty || !alreadySaved}
+                  startBusy={saving}
+                  hint={`Plays ${formatSessionLabel(upcoming)} from 09:30 ET. Each round is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL}. Your wallet signs this lineup.`}
+                />
+              </RoundSection>
+            </div>
           )}
         </TicketGate>
       </main>
       <Footer />
     </>
-  );
-}
-
-function ClosedPanel({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="border-line bg-surface-2 rounded-2xl border p-8 text-center">
-      <h2 className="font-display text-ink text-xl font-bold">{title}</h2>
-      <p className="text-ink-2 mx-auto mt-2 max-w-md text-sm leading-relaxed">{body}</p>
-    </div>
   );
 }

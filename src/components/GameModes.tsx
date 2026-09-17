@@ -9,7 +9,7 @@ const MODES = [
     tag: "Daily",
     title: "Daily Lineup",
     cadence: SESSION_LABEL,
-    body: `Before the 09:30 ET open, pick five stock cards and call each one up or down. Entry is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} at the start of the round. Your score is that stock's percent move from the official open. Lock a card to freeze it, or wait for the 16:00 ET close.`,
+    body: `Set the next round whenever you want. Once the 09:30 ET open hits, that lineup is live: no adds, no removes, only lock. Entry is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} at the start of the round. Your score is that stock's percent move from the official open.`,
     points: [
       `Season 1 entry is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} each round`,
       "Points equal today's percent change times 100",
@@ -50,7 +50,7 @@ export function GameModes() {
       <SectionHeading
         eyebrow="Play"
         title="Daily Lineup follows US market hours"
-        description="Lineups lock at the 09:30 ET open. Your score follows each stock's percent move from that print until you lock the card or the 16:00 ET close."
+        description="The live round is lock only. Build the next round anytime. Score follows each stock's percent move from the 09:30 ET open until you lock the card or the 16:00 ET close."
       />
 
       <div className="mt-14 grid gap-5 lg:grid-cols-3">

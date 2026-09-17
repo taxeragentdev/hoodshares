@@ -1,7 +1,7 @@
 import { CARDS } from "@/lib/cards";
 import { copyIndexOf, pointsForPick, totalScore } from "@/lib/game/scoring";
 import { sessionPhase } from "@/lib/game/session";
-import { sessionId } from "@/lib/game/sessionId";
+import { nextSessionId, sessionId } from "@/lib/game/sessionId";
 import { LINEUP_SIZE, type SavedPlay } from "@/lib/game/types";
 import type { PlayerRecord, PlayerSnapshot, RoundResult } from "@/lib/player";
 import { livePctMove } from "@/lib/server/prices";
@@ -15,6 +15,7 @@ export function snapshot(player: PlayerRecord): PlayerSnapshot {
     freePackAvailable: Boolean(player.freePackAvailable),
     inventory: player.inventory,
     play: player.play,
+    nextPlay: player.nextPlay ?? null,
     lastResult: player.results.at(-1) ?? null,
   };
 }
@@ -57,6 +58,74 @@ export function chipsFromPlay(play: SavedPlay) {
     const card = CARDS.find((item) => item.id === pick.cardId);
     return { ticker: card?.ticker ?? pick.cardId, direction: pick.direction };
   });
+}
+
+export function queuedRoundNumber(player: PlayerRecord): number {
+  return (player.play?.roundNumber || 1) + 1;
+}
+
+/** Settle leftover rounds, promote a queued lineup at the open, drop stale drafts. */
+export function syncPlayState(
+  player: PlayerRecord,
+  book?: SessionQuoteBook | null,
+): void {
+  expireActivePlay(player, book);
+  migrateBuildingPlay(player);
+  promoteNextPlay(player);
+  const today = sessionId();
+  const market = sessionPhase();
+  if (player.nextPlay && player.nextPlay.roundId && player.nextPlay.roundId < today) {
+    player.nextPlay = null;
+  }
+  if (
+    player.nextPlay &&
+    player.nextPlay.roundId === today &&
+    (market === "closed" || market === "weekend")
+  ) {
+    player.nextPlay = { ...player.nextPlay, roundId: nextSessionId() };
+  }
+}
+
+function migrateBuildingPlay(player: PlayerRecord): void {
+  const play = player.play;
+  if (!play || play.phase !== "building") return;
+  const today = sessionId();
+  const market = sessionPhase();
+  if (
+    market === "open" &&
+    play.lineup.length >= LINEUP_SIZE &&
+    (play.roundId === today || !play.roundId)
+  ) {
+    play.phase = "active";
+    play.roundId = today;
+    return;
+  }
+  const queued: SavedPlay = {
+    ...play,
+    phase: "building",
+    roundId: play.roundId && play.roundId >= today ? play.roundId : nextSessionId(),
+  };
+  if (!player.nextPlay || player.nextPlay.lineup.length === 0) {
+    player.nextPlay = queued;
+  }
+  player.play = null;
+}
+
+function promoteNextPlay(player: PlayerRecord): void {
+  if (sessionPhase() !== "open") return;
+  const today = sessionId();
+  const next = player.nextPlay;
+  if (!next || next.roundId !== today) return;
+  if (next.lineup.length < LINEUP_SIZE) {
+    player.nextPlay = null;
+    return;
+  }
+  if (player.play && player.play.roundId === today) {
+    player.nextPlay = null;
+    return;
+  }
+  player.play = { ...next, phase: "active", roundId: today };
+  player.nextPlay = null;
 }
 
 export function expireActivePlay(

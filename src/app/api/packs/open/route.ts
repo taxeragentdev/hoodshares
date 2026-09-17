@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { applyOpenedPack } from "@/lib/inventory";
 import { openDemoPack } from "@/lib/packs";
 import { sessionAddress } from "@/lib/server/auth";
-import { expireActivePlay, snapshot } from "@/lib/server/play";
+import { snapshot, syncPlayState } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
 import { ensurePlayer, withStore } from "@/lib/server/store";
 
@@ -17,7 +17,7 @@ export async function POST() {
 
   const player = await withStore((store) => {
     const record = ensurePlayer(store, address);
-    expireActivePlay(record, book);
+    syncPlayState(record, book);
     if (!record.ticketHeld) return null;
     if (record.inventory.packs < 1) return null;
     record.inventory = applyOpenedPack(record.inventory, opened);

@@ -10,16 +10,18 @@ interface RoundSummaryProps {
   lineup: LineupPick[];
   moves: Record<string, number | null>;
   rank: number | null;
-  canPlayAgain: boolean;
-  onPlayAgain: () => void;
+  canPlayAgain?: boolean;
+  onPlayAgain?: () => void;
+  embedded?: boolean;
 }
 
 export function RoundSummary({
   lineup,
   moves,
   rank,
-  canPlayAgain,
+  canPlayAgain = false,
   onPlayAgain,
+  embedded = false,
 }: RoundSummaryProps) {
   const cardIds = lineup.map((pick) => pick.cardId);
 
@@ -34,13 +36,20 @@ export function RoundSummary({
   const total = totalScore(rows.map((row) => row.points));
 
   return (
-    <div className="text-center">
-      <span className="bg-acid/15 text-acid rounded-full px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] uppercase">
-        Session over
-      </span>
-      <h2 className="font-display text-ink mt-3 text-3xl font-bold tracking-wide uppercase">
-        Settled at the close
-      </h2>
+    <div className={embedded ? "" : "text-center"}>
+      {!embedded && (
+        <>
+          <span className="bg-acid/15 text-acid rounded-full px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] uppercase">
+            Session over
+          </span>
+          <h2 className="font-display text-ink mt-3 text-3xl font-bold tracking-wide uppercase">
+            Settled at the close
+          </h2>
+        </>
+      )}
+      {embedded && (
+        <p className="text-ink-3 -mt-2 mb-4 text-sm">Settled at the 16:00 ET close.</p>
+      )}
 
       <div className="mt-8 grid grid-cols-5 gap-2 sm:gap-4">
         {rows.map(({ pick, card, points }) => (
@@ -79,7 +88,7 @@ export function RoundSummary({
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        {canPlayAgain && (
+        {canPlayAgain && onPlayAgain && (
           <button
             type="button"
             onClick={onPlayAgain}

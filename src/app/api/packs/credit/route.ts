@@ -9,7 +9,7 @@ import {
 import { activeChain } from "@/lib/chains";
 import { PACK_SHOP_ABI, PACK_SHOP_ADDRESS } from "@/lib/contracts";
 import { sessionAddress } from "@/lib/server/auth";
-import { expireActivePlay, snapshot } from "@/lib/server/play";
+import { snapshot, syncPlayState } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
 import { creditPaidPacks, ensurePlayer, withStore } from "@/lib/server/store";
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   const book = await sessionQuotes();
   const player = await withStore((store) => {
     const record = ensurePlayer(store, address);
-    expireActivePlay(record, book);
+    syncPlayState(record, book);
     if (!record.ticketHeld) return null;
     creditPaidPacks(store, record, txHash, Number(quantity));
     return snapshot(record);

@@ -20,6 +20,8 @@ export interface PlayerRecord {
   includedPackClaimed: boolean;
   inventory: Inventory;
   play: SavedPlay | null;
+  /** Queued lineup for the next session. Editable until that session opens. */
+  nextPlay: SavedPlay | null;
   results: RoundResult[];
 }
 
@@ -30,5 +32,6 @@ export interface PlayerSnapshot {
   freePackAvailable: boolean;
   inventory: Inventory;
   play: SavedPlay | null;
+  nextPlay: SavedPlay | null;
   lastResult: RoundResult | null;
 }

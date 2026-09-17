@@ -18,7 +18,7 @@ const QUESTIONS = [
   },
   {
     q: "When does a round start and end?",
-    a: "US market hours: 09:30 to 16:00 New York time, weekdays only. Lineups lock at the open. No Daily Lineup on weekends or US market holidays.",
+    a: "US market hours: 09:30 to 16:00 New York time, weekdays only. The live round cannot be edited, only locked. You can add and remove cards on the next round anytime. No Daily Lineup on weekends or US market holidays.",
   },
   {
     q: "How is a card scored?",

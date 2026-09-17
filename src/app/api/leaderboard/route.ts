@@ -1,7 +1,7 @@
 import { connection, NextResponse } from "next/server";
 import { buildLeaderboard } from "@/lib/game/leaderboard";
 import { isSessionInWeek, weekId } from "@/lib/game/sessionId";
-import { expireActivePlay } from "@/lib/server/play";
+import { syncPlayState } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
 import { withStore } from "@/lib/server/store";
 
@@ -11,7 +11,7 @@ export async function GET() {
   const book = await sessionQuotes();
   const entries = await withStore((store) => {
     return Object.values(store.players).flatMap((player) => {
-      expireActivePlay(player, book);
+      syncPlayState(player, book);
       const weekRows = player.results.filter((row) =>
         isSessionInWeek(row.sessionId, week),
       );
