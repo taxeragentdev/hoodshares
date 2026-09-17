@@ -293,10 +293,8 @@ export function PackOpener({
           <div
             className={
               idle
-                ? `h-full w-full ${phase === "idle" ? "cursor-grab active:cursor-grabbing" : ""}`
-                : `absolute top-0 left-1/2 z-20 w-full max-w-[248px] -translate-x-1/2 ${
-                    phase === "idle" ? "cursor-grab active:cursor-grabbing" : ""
-                  }`
+                ? "h-full w-full cursor-grab active:cursor-grabbing"
+                : "absolute top-0 left-1/2 z-20 w-full max-w-[248px] -translate-x-1/2"
             }
             style={{
               opacity: packHiding ? 0 : 1,
