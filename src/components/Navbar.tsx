@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ConnectWalletButton } from "./ConnectWalletButton";
 import { Logo } from "./Logo";
+import { XLink } from "./XLink";
 
 const PLAY_LINKS = [
   { href: "/inventory", label: "Inventory" },
@@ -88,6 +89,7 @@ export function Navbar() {
         </ul>
 
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+          <XLink />
           <Link
             href="/mint"
             className="border-acid/40 text-acid hover:bg-acid/10 rounded-full border px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors sm:px-4"

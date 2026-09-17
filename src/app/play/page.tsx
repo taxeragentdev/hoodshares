@@ -20,6 +20,7 @@ import {
 } from "@/lib/game/session";
 import { sessionId } from "@/lib/game/sessionId";
 import { LINEUP_SIZE, type LineupPick, type RoundPhase } from "@/lib/game/types";
+import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 
 function formatTimeLeft(msLeft: number): string {
   const totalSeconds = Math.max(0, Math.ceil(msLeft / 1000));
@@ -60,6 +61,9 @@ export default function PlayPage() {
   const [openPx, setOpenPx] = useState<Record<string, number>>({});
   const [closePx, setClosePx] = useState<Record<string, number>>({});
   const [rank, setRank] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [lockingSlotId, setLockingSlotId] = useState<string | null>(null);
+  const [signError, setSignError] = useState<string | null>(null);
   const slotCounter = useRef(0);
   const restored = useRef(false);
 
@@ -165,23 +169,14 @@ export default function PlayPage() {
   }, [phase, player?.address]);
 
   useEffect(() => {
-    if (!hydrated || !signedIn) return;
-    if (phase === "settled") {
-      void settlePlay().catch(() => undefined);
-      return;
-    }
-    const handle = window.setTimeout(() => {
-      void savePlay({
-        phase,
-        lineup,
-        roundId: roundId || today,
-        roundNumber,
-        startedAt: 0,
-        slotCounter: slotCounter.current,
-      }).catch(() => undefined);
-    }, 280);
-    return () => window.clearTimeout(handle);
-  }, [hydrated, signedIn, phase, lineup, roundId, roundNumber, today, savePlay, settlePlay]);
+    if (phase !== "settled" || !signedIn) return;
+    void settlePlay().catch(() => undefined);
+  }, [phase, signedIn, settlePlay]);
+
+  const savedLineup = player?.play?.lineup ?? [];
+  const lineupDirty =
+    JSON.stringify(lineup) !== JSON.stringify(savedLineup);
+  const alreadySaved = Boolean(player?.play && player.play.roundId === (roundId || today));
 
   function handleAdd(cardId: string) {
     if (lineup.length >= LINEUP_SIZE) return;
@@ -208,25 +203,53 @@ export default function PlayPage() {
     );
   }
 
-  function handleLockLineup() {
-    setRoundId(today);
-    void savePlay({
-      phase: "building",
+  async function handleLockLineup() {
+    setSignError(null);
+    setSaving(true);
+    const nextPlay = {
+      phase: "building" as const,
       lineup,
       roundId: today,
       roundNumber,
       startedAt: 0,
       slotCounter: slotCounter.current,
-    });
+    };
+    try {
+      const next = await savePlay(nextPlay, { intent: "save" });
+      setRoundId(today);
+      if (next.play) setLineup(next.play.lineup);
+    } catch (err) {
+      setSignError(err instanceof Error ? err.message : "Could not save this lineup");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleLock(slotId: string) {
+  async function handleLock(slotId: string) {
     const at = sessionProgress();
-    setLineup((prev) =>
-      prev.map((pick) =>
-        pick.slotId === slotId ? { ...pick, locked: true, lockedAtProgress: at } : pick,
-      ),
+    const nextLineup = lineup.map((pick) =>
+      pick.slotId === slotId ? { ...pick, locked: true, lockedAtProgress: at } : pick,
     );
+    setSignError(null);
+    setLockingSlotId(slotId);
+    try {
+      const next = await savePlay(
+        {
+          phase: "active",
+          lineup: nextLineup,
+          roundId: roundId || today,
+          roundNumber,
+          startedAt: 0,
+          slotCounter: slotCounter.current,
+        },
+        { intent: "lock", lockedSlotId: slotId },
+      );
+      setLineup(next.play?.lineup ?? nextLineup);
+    } catch (err) {
+      setSignError(err instanceof Error ? err.message : "Could not lock this card");
+    } finally {
+      setLockingSlotId(null);
+    }
   }
 
   function handlePlayAgain() {
@@ -262,9 +285,14 @@ export default function PlayPage() {
       <Navbar />
       <main className="bg-void mx-auto w-full max-w-5xl flex-1 px-5 py-14 sm:px-8">
         <div className="mb-10 text-center">
-          <span className="border-acid/30 bg-acid/10 text-acid inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
-            {SESSION_LABEL}
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="border-acid/30 bg-acid/10 text-acid inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
+              {SESSION_LABEL}
+            </span>
+            <span className="border-line bg-surface-2 text-ink inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
+              {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} to enter
+            </span>
+          </div>
           <h1 className="font-display text-ink mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
             Daily Lineup
           </h1>
@@ -272,13 +300,18 @@ export default function PlayPage() {
             {clockLabel ?? "\u00a0"}
           </p>
           <p className="text-ink-2 mx-auto mt-3 max-w-xl text-sm leading-relaxed">
-            Five stock cards from your packs, each called up or down. Score is
+            Five stock cards from your packs, each called up or down. Each
+            round is {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} from Season 1. Score is
             that name&apos;s percent move from the 09:30 ET open times 100.
-            Lock to bank it early, or take the 16:00 ET close.
+            Save the lineup with a signature. Lock a card the same way to bank
+            it early, or take the 16:00 ET close.
           </p>
         </div>
 
         <TicketGate title="Connect to play">
+          {signError && (
+            <p className="text-down mb-4 text-center text-xs leading-relaxed">{signError}</p>
+          )}
           {!hydrated && signedIn && (
             <p className="text-ink-3 py-16 text-center font-mono text-xs tracking-wide">
               Loading your cards…
@@ -292,9 +325,13 @@ export default function PlayPage() {
               onAdd={handleAdd}
               onRemove={handleRemove}
               onToggleDirection={handleToggleDirection}
-              onStart={handleLockLineup}
-              startLabel="Save lineup"
-              startEnabled
+              onStart={() => void handleLockLineup()}
+              startLabel={
+                alreadySaved && !lineupDirty ? "Lineup saved" : lineupDirty && alreadySaved ? "Save changes" : "Save lineup"
+              }
+              startEnabled={lineupDirty || !alreadySaved}
+              startBusy={saving}
+              hint={`Each round is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL}. Your wallet signs this lineup. Change a card or a call and save again.`}
             />
           )}
 
@@ -304,7 +341,8 @@ export default function PlayPage() {
               moves={moves}
               progress={progress}
               timeLeftLabel={formatTimeLeft(msUntilSessionClose())}
-              onLock={handleLock}
+              onLock={(slotId) => void handleLock(slotId)}
+              lockingSlotId={lockingSlotId}
             />
           )}
 

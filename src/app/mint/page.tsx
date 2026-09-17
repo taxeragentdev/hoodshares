@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TicketPanel } from "@/components/ticket/TicketPanel";
 import { TICKET_NAME, TICKET_SEASON } from "@/lib/ticket";
+import { PACK_PRICE_HOOD_LABEL, PACK_TOKEN_SYMBOL } from "@/lib/packs";
 
 export default function MintPage() {
   return (
@@ -17,7 +18,8 @@ export default function MintPage() {
           </h1>
           <p className="text-ink-2 mx-auto mt-3 max-w-md text-sm leading-relaxed">
             One HoodPass per wallet, minted on OpenSea. That pass includes one
-            pack you can claim now or later.
+            pack on this wallet. Extra packs mint here for{" "}
+            {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL}.
           </p>
         </div>
         <TicketPanel />

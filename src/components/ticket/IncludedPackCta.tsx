@@ -21,8 +21,8 @@ export function IncludedPackCta({ laterHref = "/packs" }: { laterHref?: string }
   return (
     <div className="border-acid/30 bg-acid/8 mt-6 space-y-3 rounded-2xl border p-4">
       <p className="text-ink text-center text-sm leading-relaxed">
-        This HoodPass includes one pack. Claim it now or later. It stays on
-        this wallet until you do.
+        This HoodPass includes one pack for this wallet. Extra HoodPass tokens
+        do not add another. Claim it now or later.
       </p>
       <button
         type="button"

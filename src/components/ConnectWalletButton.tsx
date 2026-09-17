@@ -76,7 +76,7 @@ export function ConnectWalletButton() {
           onClick={() => void signIn()}
           className="bg-acid hover:bg-acid-dim rounded-full px-5 py-2.5 text-sm font-semibold text-black transition-colors disabled:opacity-60"
         >
-          {signing ? "Check wallet…" : "Sign to save"}
+          {signing ? "Check wallet…" : "Sign in"}
         </button>
       );
     }

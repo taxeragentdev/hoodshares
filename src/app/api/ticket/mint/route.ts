@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
+import { OPENSEA_MINT_URL } from "@/lib/opensea";
 import { sessionAddress } from "@/lib/server/auth";
 import { expireActivePlay, snapshot } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
 import { ensurePlayer, issueTicket, withStore } from "@/lib/server/store";
 
 export async function POST() {
+  if (OPENSEA_MINT_URL) {
+    return NextResponse.json(
+      { error: "Mint HoodPass on OpenSea, then unlock your pack here." },
+      { status: 403 },
+    );
+  }
+
   const address = await sessionAddress();
   if (!address) {
     return NextResponse.json({ error: "signed out" }, { status: 401 });

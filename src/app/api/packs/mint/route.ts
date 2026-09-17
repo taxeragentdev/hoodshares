@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { creditPacks } from "@/lib/inventory";
 import { sessionAddress } from "@/lib/server/auth";
 import { expireActivePlay, snapshot } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
@@ -11,17 +10,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "signed out" }, { status: 401 });
   }
   const body = (await request.json().catch(() => ({}))) as { grant?: boolean };
-  const grant = body.grant === true;
+  if (body.grant !== true) {
+    return NextResponse.json(
+      { error: "Extra packs mint on HoodShares for 50,000 $HS. This wallet already used its included pack, or needs a HoodPass." },
+      { status: 403 },
+    );
+  }
   const book = await sessionQuotes();
   const player = await withStore((store) => {
     const record = ensurePlayer(store, address);
     expireActivePlay(record, book);
     if (!record.ticketHeld) return null;
-    if (grant) {
-      if (!claimIncludedPack(record)) return "no-grant" as const;
-    } else {
-      record.inventory = creditPacks(record.inventory, 1);
-    }
+    if (!claimIncludedPack(record)) return "no-grant" as const;
     return snapshot(record);
   });
   if (player === null) {

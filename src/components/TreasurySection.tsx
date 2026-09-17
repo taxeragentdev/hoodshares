@@ -1,3 +1,5 @@
+import { PACK_PRICE_HOOD_LABEL, PACK_TOKEN_SYMBOL } from "@/lib/packs";
+import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 import { Section, SectionHeading } from "./ui/Section";
 
 const ALLOCATION = [
@@ -5,13 +7,13 @@ const ALLOCATION = [
     label: "Prize pool",
     percent: 60,
     color: "#ccff00",
-    note: "Pays Daily Lineup and later contests",
+    note: "Pays the weekly board and later contests",
   },
   {
     label: "Buyback and burn",
     percent: 30,
     color: "#fbbf24",
-    note: "ETH buys HOOD on the market and burns it",
+    note: `ETH buys ${TOKEN_SYMBOL} on the market and burns it`,
   },
   {
     label: "Development",
@@ -30,7 +32,11 @@ const ALLOCATION = [
 const INFLOWS = [
   {
     title: "Pack sales",
-    body: "Packs are paid in HOOD. Those tokens go to the treasury.",
+    body: `Packs are paid in ${PACK_TOKEN_SYMBOL}. Extra packs are ${PACK_PRICE_HOOD_LABEL} ${PACK_TOKEN_SYMBOL}. Those tokens go to the treasury.`,
+  },
+  {
+    title: "Daily Lineup entry",
+    body: `Season 1 charges ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} at the start of every round. The whole fee goes to the prize pool.`,
   },
   {
     title: "Secondary royalties",
@@ -48,10 +54,24 @@ export function TreasurySection() {
       <SectionHeading
         eyebrow="Treasury"
         title="Payouts scale with the treasury"
-        description="Daily rewards are a share of the prize pool, not a fixed amount. If the pool shrinks, payouts shrink with it, so the pool cannot be drained to zero."
+        description="Weekly rewards are a share of the prize pool, not a fixed amount. If the pool shrinks, payouts shrink with it, so the pool cannot be drained to zero."
       />
 
-      <div className="mt-14 grid gap-10 lg:grid-cols-[1fr_1fr]">
+      <div className="border-acid/35 bg-acid/8 mt-10 rounded-2xl border p-6 sm:p-8">
+        <p className="text-acid font-mono text-[10px] tracking-[0.2em] uppercase">
+          Trade fees
+        </p>
+        <h3 className="font-display text-ink mt-3 text-2xl font-bold tracking-tight">
+          50% of every {TOKEN_SYMBOL} trade fee feeds the prize pool
+        </h3>
+        <p className="text-ink-2 mt-3 max-w-2xl text-sm leading-relaxed">
+          When {TOKEN_SYMBOL} trades, half of the fee is routed to Friday&apos;s
+          prize pool. That cut sits on top of the mint split below. It is not
+          withdrawn as revenue.
+        </p>
+      </div>
+
+      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_1fr]">
         <div className="border-line bg-surface rounded-2xl border p-6 sm:p-8">
           <h3 className="font-display text-ink text-lg font-bold">
             Where ETH revenue goes
@@ -111,8 +131,9 @@ export function TreasurySection() {
               Claiming a prize
             </h3>
             <p className="text-ink-2 mt-2 text-sm leading-relaxed">
-              After each session, winners claim HOOD from the prize pool. The
-              payout list is public, so you can check it yourself.
+              After Friday&apos;s close, winners claim {TOKEN_SYMBOL} from the
+              weekly prize pool. The payout list is public, so you can check it
+              yourself.
             </p>
           </div>
         </div>

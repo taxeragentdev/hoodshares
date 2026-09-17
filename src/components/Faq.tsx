@@ -1,3 +1,5 @@
+import { PACK_PRICE_HOOD_LABEL, PACK_TOKEN_SYMBOL } from "@/lib/packs";
+import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 import { Section, SectionHeading } from "./ui/Section";
 
 const QUESTIONS = [
@@ -7,7 +9,7 @@ const QUESTIONS = [
   },
   {
     q: "How do I start?",
-    a: "Mint one HoodPass on OpenSea. One per wallet. That pass includes one pack you can claim on HoodShares now or later. Then take five cards into Daily Lineup.",
+    a: `Mint one HoodPass on OpenSea. This wallet gets one included pack on HoodShares, even if OpenSea let you mint more than one pass. Extra packs mint on this site for ${PACK_PRICE_HOOD_LABEL} ${PACK_TOKEN_SYMBOL}. Then take five cards into Daily Lineup. Each round costs ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL}.`,
   },
   {
     q: "Can I pull the same stock five times?",
@@ -27,11 +29,15 @@ const QUESTIONS = [
   },
   {
     q: "What does it cost to play, and what do I win?",
-    a: "A five card pack paid in HOOD is a full Daily Lineup. The round itself is free once you hold the cards. After the close, the top ten split a HOOD pool.",
+    a: `A HoodPass is 0.001 ETH on OpenSea and includes one pack. Extra packs are ${PACK_PRICE_HOOD_LABEL} ${PACK_TOKEN_SYMBOL} on HoodShares. Each Daily Lineup round costs ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} from Season 1. After Friday's close, the top ten split a weekly ${TOKEN_SYMBOL} pool.`,
   },
   {
     q: "Which network do I need?",
     a: "Robinhood Chain, chain ID 4663. Gas is ETH. Any Ethereum wallet works once you add the network.",
+  },
+  {
+    q: "Where do trade fees go?",
+    a: `Half of every ${TOKEN_SYMBOL} trade fee goes to the prize pool. Round entry fees go there in full. ETH from the HoodPass mint splits 60 percent prize, 30 percent buyback and burn, 5 percent development, 5 percent growth.`,
   },
 ];
 

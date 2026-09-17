@@ -2,7 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PackPanel } from "@/components/packs/PackPanel";
 import { CARDS } from "@/lib/cards";
-import { CARDS_PER_PACK, PACK_TOKEN_SYMBOL } from "@/lib/packs";
+import { CARDS_PER_PACK, PACK_PRICE_HOOD_LABEL, PACK_TOKEN_SYMBOL } from "@/lib/packs";
 
 export default function PacksPage() {
   return (
@@ -18,7 +18,8 @@ export default function PacksPage() {
           </h1>
           <p className="text-ink-2 mx-auto mt-3 max-w-md text-sm leading-relaxed">
             {CARDS_PER_PACK} cards. One lineup. Your HoodPass includes the first
-            pack. Extra packs are paid in {PACK_TOKEN_SYMBOL}.
+            pack on this wallet. Extra packs mint here for{" "}
+            {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL}.
           </p>
         </div>
 

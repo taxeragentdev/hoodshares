@@ -86,7 +86,21 @@ export const PACK_SHOP_ABI = [
   },
   {
     type: "function",
+    name: "buyPacksWithEth",
+    stateMutability: "payable",
+    inputs: [{ name: "quantity", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "function",
     name: "packPrice",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "ethPackPrice",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
@@ -104,6 +118,15 @@ export const PACK_SHOP_ABI = [
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "address" }],
+  },
+  {
+    type: "event",
+    name: "PacksBought",
+    inputs: [
+      { name: "buyer", type: "address", indexed: true },
+      { name: "packs", type: "uint256", indexed: false },
+      { name: "paid", type: "uint256", indexed: false },
+    ],
   },
 ] as const;
 
@@ -260,6 +283,16 @@ export const ENTRY_TICKET_ADDRESS: Partial<Record<number, `0x${string}`>> = {
     (process.env.NEXT_PUBLIC_ENTRY_TICKET_ADDRESS_MAINNET as `0x${string}` | undefined) ?? undefined,
   [robinhoodChainTestnet.id]:
     (process.env.NEXT_PUBLIC_ENTRY_TICKET_ADDRESS_TESTNET as `0x${string}` | undefined) ?? undefined,
+};
+
+/** OpenSea HoodPass drop contract. One included pack per wallet even if balance is 20. */
+export const HOODPASS_CONTRACT: Partial<Record<number, `0x${string}`>> = {
+  [robinhoodChain.id]:
+    (process.env.NEXT_PUBLIC_HOODPASS_CONTRACT as `0x${string}` | undefined) ??
+    "0xE2C05B91f0936D09d84D36eDbe8B513235A1D2d6",
+  [robinhoodChainTestnet.id]:
+    (process.env.NEXT_PUBLIC_HOODPASS_CONTRACT_TESTNET as `0x${string}` | undefined) ??
+    ENTRY_TICKET_ADDRESS[robinhoodChainTestnet.id],
 };
 
 /**

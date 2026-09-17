@@ -21,6 +21,7 @@ import {
 import { openedFromIds, type OpenedCard } from "@/lib/packs";
 import type { PlayerSnapshot } from "@/lib/player";
 import type { SavedPlay } from "@/lib/game/types";
+import { playActionMessage } from "@/lib/playAuth";
 
 export type AuthStatus = "boot" | "guest" | "need-sign" | "ready";
 
@@ -36,8 +37,12 @@ interface AuthValue {
   mintPack: (opts?: { grant?: boolean }) => Promise<void>;
   claimTicket: () => Promise<void>;
   syncTicket: () => Promise<void>;
+  creditPaidPack: (txHash: `0x${string}`) => Promise<void>;
   openPack: () => Promise<OpenedCard[] | null>;
-  savePlay: (play: SavedPlay) => Promise<void>;
+  savePlay: (
+    play: SavedPlay,
+    opts: { intent: "save" | "lock"; lockedSlotId?: string },
+  ) => Promise<PlayerSnapshot>;
   settlePlay: () => Promise<PlayerSnapshot | null>;
 }
 
@@ -149,6 +154,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPlayer(next);
   }, []);
 
+  const creditPaidPack = useCallback(async (txHash: `0x${string}`) => {
+    const next = await api<PlayerSnapshot>("/api/packs/credit", {
+      method: "POST",
+      body: JSON.stringify({ txHash }),
+    });
+    setPlayer(next);
+  }, []);
+
   const openPack = useCallback(async (): Promise<OpenedCard[] | null> => {
     try {
       const next = await api<OpenPackResponse>("/api/packs/open", { method: "POST" });
@@ -159,13 +172,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const savePlay = useCallback(async (play: SavedPlay) => {
-    const next = await api<PlayerSnapshot>("/api/play", {
-      method: "PUT",
-      body: JSON.stringify(play),
-    });
-    setPlayer(next);
-  }, []);
+  const savePlay = useCallback(
+    async (
+      play: SavedPlay,
+      opts: { intent: "save" | "lock"; lockedSlotId?: string },
+    ) => {
+      const wallet = addressRef.current;
+      if (!wallet) throw new Error("Connect a wallet first");
+      const { nonce } = await api<{ nonce: string; message: string }>(
+        "/api/auth/nonce",
+        { method: "POST", body: JSON.stringify({ address: wallet }) },
+      );
+      const message = playActionMessage(
+        opts.intent,
+        wallet,
+        nonce,
+        play,
+        opts.lockedSlotId,
+      );
+      const signature = await signMessageAsync({ message });
+      const next = await api<PlayerSnapshot>("/api/play", {
+        method: "PUT",
+        body: JSON.stringify({
+          play,
+          nonce,
+          signature,
+          intent: opts.intent,
+          lockedSlotId: opts.lockedSlotId,
+        }),
+      });
+      setPlayer(next);
+      return next;
+    },
+    [signMessageAsync],
+  );
 
   const settlePlay = useCallback(async () => {
     const next = await api<PlayerSnapshot>("/api/play/settle", { method: "POST" });
@@ -186,11 +226,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mintPack,
       claimTicket,
       syncTicket,
+      creditPaidPack,
       openPack,
       savePlay,
       settlePlay,
     }),
-    [status, player, signing, error, signIn, mintPack, claimTicket, syncTicket, openPack, savePlay, settlePlay],
+    [status, player, signing, error, signIn, mintPack, claimTicket, syncTicket, creditPaidPack, openPack, savePlay, settlePlay],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

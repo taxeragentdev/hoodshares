@@ -7,10 +7,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SealedPack} from "./SealedPack.sol";
 
-/// @notice Sells sealed packs paid in the project's ERC-20. Each pack is an
-/// ERC-1155 the buyer can hold or trade. Opening is a separate call on
-/// `SealedPack` — it burns the pack and emits the five tickers. Cards are
-/// not minted on this path.
+/// @notice Sells sealed packs paid in HOOD via `buyPacks`. ETH mint is
+/// optional (`buyPacksWithEth`) and off by default.
 ///
 /// The payment token is launched outside this repo (a Pons drop on
 /// Robinhood Chain). This contract only ever *reads* that address, so it
@@ -27,10 +25,12 @@ contract PackShop is Ownable, ReentrancyGuard {
 
     IERC20 public paymentToken;
     uint256 public packPrice;
+    uint256 public ethPackPrice;
     bool public saleOpen;
 
     event PaymentTokenUpdated(address token);
     event PackPriceUpdated(uint256 price);
+    event EthPackPriceUpdated(uint256 price);
     event SaleOpenUpdated(bool open);
     event PacksBought(address indexed buyer, uint256 packs, uint256 paid);
 
@@ -47,6 +47,7 @@ contract PackShop is Ownable, ReentrancyGuard {
         treasury = treasury_;
         paymentToken = paymentToken_;
         packPrice = packPrice_;
+        ethPackPrice = 0;
     }
 
     /// @notice Buys `quantity` sealed packs. Pulls `packPrice * quantity` of
@@ -65,6 +66,21 @@ contract PackShop is Ownable, ReentrancyGuard {
         emit PacksBought(msg.sender, quantity, paid);
     }
 
+    /// @notice Optional ETH buy. Off unless the owner sets `ethPackPrice`.
+    function buyPacksWithEth(uint256 quantity) external payable nonReentrant {
+        require(saleOpen, "pack sale closed");
+        require(quantity > 0, "quantity is zero");
+        require(ethPackPrice > 0, "eth pack price not set");
+
+        uint256 paid = ethPackPrice * quantity;
+        require(msg.value == paid, "wrong eth");
+
+        (bool ok, ) = treasury.call{value: paid}("");
+        require(ok, "eth transfer failed");
+        packs.mint(msg.sender, quantity);
+        emit PacksBought(msg.sender, quantity, paid);
+    }
+
     function setPaymentToken(address token) external onlyOwner {
         paymentToken = IERC20(token);
         emit PaymentTokenUpdated(token);
@@ -73,6 +89,11 @@ contract PackShop is Ownable, ReentrancyGuard {
     function setPackPrice(uint256 price) external onlyOwner {
         packPrice = price;
         emit PackPriceUpdated(price);
+    }
+
+    function setEthPackPrice(uint256 price) external onlyOwner {
+        ethPackPrice = price;
+        emit EthPackPriceUpdated(price);
     }
 
     function setSaleOpen(bool open) external onlyOwner {

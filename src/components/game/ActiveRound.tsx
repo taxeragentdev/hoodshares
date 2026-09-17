@@ -11,6 +11,7 @@ interface ActiveRoundProps {
   progress: number;
   timeLeftLabel: string;
   onLock: (slotId: string) => void;
+  lockingSlotId?: string | null;
 }
 
 export function ActiveRound({
@@ -19,6 +20,7 @@ export function ActiveRound({
   progress,
   timeLeftLabel,
   onLock,
+  lockingSlotId = null,
 }: ActiveRoundProps) {
   const cardIds = lineup.map((pick) => pick.cardId);
 
@@ -97,10 +99,11 @@ export function ActiveRound({
             ) : (
               <button
                 type="button"
+                disabled={lockingSlotId === pick.slotId}
                 onClick={() => onLock(pick.slotId)}
-                className="border-line hover:border-acid hover:text-acid text-ink-2 mt-2.5 rounded-lg border py-2.5 font-mono text-xs font-bold tracking-widest uppercase transition-colors"
+                className="border-line hover:border-acid hover:text-acid text-ink-2 mt-2.5 rounded-lg border py-2.5 font-mono text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-50"
               >
-                Lock
+                {lockingSlotId === pick.slotId ? "Sign…" : "Lock"}
               </button>
             )}
           </div>

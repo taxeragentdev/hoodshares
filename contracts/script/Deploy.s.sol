@@ -28,8 +28,8 @@ contract Deploy is Script {
     uint256 private constant ROBINHOOD_MAINNET_CHAIN_ID = 4663;
     uint256 private constant MINT_PRICE = 0.021 ether;
     uint96 private constant ROYALTY_FEE_BPS = 500; // 5%
-    uint256 private constant TICKET_PRICE = 0.01 ether;
-    uint256 private constant TICKET_MAX_SUPPLY = 2_700;
+    uint256 private constant TICKET_PRICE = 0.001 ether;
+    uint256 private constant TICKET_MAX_SUPPLY = 1999;
     uint256 private constant DECK_SIZE = 30;
 
     function run() external {
@@ -73,10 +73,7 @@ contract Deploy is Script {
 
         address packToken = vm.envOr("PACK_TOKEN", address(0));
         uint256 packPrice = vm.envOr("PACK_PRICE", uint256(0));
-        PackShop shop;
-        if (packToken != address(0) && packPrice != 0) {
-            shop = new PackShop(owner, packs, address(treasury), IERC20(packToken), packPrice);
-        }
+        PackShop shop = new PackShop(owner, packs, address(treasury), IERC20(packToken), packPrice);
 
         vm.stopBroadcast();
 
@@ -94,11 +91,12 @@ contract Deploy is Script {
         console.log("treasury.setMintSource(collection, true)");
         console.log("treasury.setTicketSource(ticket, true)");
         console.log("treasury.setRewardDistributor(distributor)");
-        console.log("packs.setShop(shop)                                    # once PackShop is deployed");
+        console.log("packs.setShop(shop)");
         console.log("shop.setSaleOpen(true)");
+        console.log("shop.setPackPrice(50000 ether)                        # 50,000 HOOD at 18 decimals");
         console.log("ticket.setSalePhase(EntryTicket.SalePhase.Public)      # or .Allowlist first");
         console.log("--- Still pending ---");
-        console.log("PACK_TOKEN + PACK_PRICE env vars if the project token already exists");
+        console.log("PACK_TOKEN + PACK_PRICE=50000e18 if HOOD already exists");
         console.log("Treasury.executeBuyback(router, swapData, ethAmount)  # once the token + pool exist");
     }
 }

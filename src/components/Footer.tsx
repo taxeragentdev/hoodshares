@@ -1,4 +1,5 @@
 import { Logo } from "./Logo";
+import { XMark, X_URL } from "./XLink";
 
 const COLUMNS = [
   {
@@ -40,7 +41,25 @@ export function Footer() {
               Stock cards on Robinhood Chain. Scores come from the market.
               Cards are not a position in any stock.
             </p>
-            <div className="border-line bg-surface-2 mt-6 inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2">
+            <a
+              href={X_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border-line hover:border-acid hover:bg-acid/8 group mt-6 inline-flex items-center gap-3 rounded-full border px-3.5 py-2.5 transition-colors"
+            >
+              <span className="bg-surface-3 text-ink group-hover:bg-acid group-hover:text-black flex h-8 w-8 items-center justify-center rounded-full transition-colors">
+                <XMark className="h-3.5 w-3.5" />
+              </span>
+              <span className="text-left">
+                <span className="text-ink block text-sm font-semibold">
+                  Follow on X
+                </span>
+                <span className="text-ink-3 font-mono text-[11px]">
+                  @hoodshares
+                </span>
+              </span>
+            </a>
+            <div className="border-line bg-surface-2 mt-4 inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2">
               <span className="bg-up h-1.5 w-1.5 animate-pulse rounded-full" />
               <span className="text-ink-2 font-mono text-[11px] tracking-wider">
                 Chain ID 4663, gas in ETH

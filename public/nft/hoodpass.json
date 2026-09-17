@@ -1,8 +1,9 @@
 {
   "name": "HoodPass",
   "description": "Season 01 HoodPass on Robinhood Chain. This pass is the door to HoodShares: claim your included pack, open cards, and play Daily Lineup. It is a digital collectible. It is not a security, not a derivative, and not a claim on any stock or company.",
-  "image": "/hoodpass.png",
+  "image": "https://www.hoodshares.xyz/hoodpass.png",
   "external_url": "https://www.hoodshares.xyz",
+  "background_color": "050505",
   "attributes": [
     { "trait_type": "Season", "value": "01" },
     { "trait_type": "Access", "value": "HoodPass" },

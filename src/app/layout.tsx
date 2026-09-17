@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "HoodShares | Collect the Market",
   description:
-    "Stock cards on Robinhood Chain. Open a pack, play the daily lineup, win HOOD.",
+    "Stock cards on Robinhood Chain. Open a pack, play the daily lineup, win $HS.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

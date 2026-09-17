@@ -22,7 +22,7 @@ export function signInMessage(address: string, nonce: string): string {
   return [
     "HoodShares",
     "",
-    "Sign this to save your cards, lineup, and score to this wallet.",
+    "Sign in to load this wallet.",
     "",
     `Wallet: ${address}`,
     `Nonce: ${nonce}`,
@@ -107,6 +107,20 @@ export async function verifySignIn(
   return verifyMessage({
     address,
     message: signInMessage(address, nonce),
+    signature,
+  });
+}
+
+export async function verifyPlaySignature(
+  address: `0x${string}`,
+  nonce: string,
+  signature: `0x${string}`,
+  message: string,
+): Promise<boolean> {
+  if (!parseIssuedNonce(address, nonce)) return false;
+  return verifyMessage({
+    address,
+    message,
     signature,
   });
 }

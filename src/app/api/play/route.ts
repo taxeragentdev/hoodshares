@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import type { SavedPlay } from "@/lib/game/types";
 import { LINEUP_SIZE } from "@/lib/game/types";
 import { sessionId } from "@/lib/game/sessionId";
-import { sessionAddress } from "@/lib/server/auth";
+import {
+  playActionMessage,
+  type PlayIntent,
+} from "@/lib/playAuth";
+import { sessionAddress, verifyPlaySignature } from "@/lib/server/auth";
 import { expireActivePlay, snapshot, stampLocks } from "@/lib/server/play";
 import {
   configuredFeedCount,
@@ -17,9 +21,45 @@ export async function PUT(request: Request) {
   if (!address) {
     return NextResponse.json({ error: "signed out" }, { status: 401 });
   }
-  const play = (await request.json()) as SavedPlay;
+  const body = (await request.json()) as {
+    play?: SavedPlay;
+    nonce?: string;
+    signature?: string;
+    intent?: PlayIntent;
+    lockedSlotId?: string;
+  };
+  const play = body.play;
   if (!play || !Array.isArray(play.lineup) || play.lineup.length > LINEUP_SIZE) {
     return NextResponse.json({ error: "bad play" }, { status: 400 });
+  }
+  if (!body.nonce || !body.signature) {
+    return NextResponse.json({ error: "sign this lineup" }, { status: 400 });
+  }
+  const intent: PlayIntent = body.intent === "lock" ? "lock" : "save";
+  if (intent === "lock") {
+    const locked = body.lockedSlotId
+      ? play.lineup.find((pick) => pick.slotId === body.lockedSlotId)
+      : undefined;
+    if (!locked?.locked) {
+      return NextResponse.json({ error: "bad lock" }, { status: 400 });
+    }
+  }
+
+  const message = playActionMessage(
+    intent,
+    address,
+    body.nonce,
+    play,
+    body.lockedSlotId,
+  );
+  const ok = await verifyPlaySignature(
+    address,
+    body.nonce,
+    body.signature as `0x${string}`,
+    message,
+  );
+  if (!ok) {
+    return NextResponse.json({ error: "bad signature" }, { status: 401 });
   }
 
   const live =

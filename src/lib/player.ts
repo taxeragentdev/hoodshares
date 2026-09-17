@@ -16,6 +16,8 @@ export interface PlayerRecord {
   ticketSerial: string | null;
   /** True until the included pack from HoodPass is claimed. */
   freePackAvailable: boolean;
+  /** Stays true after the included pack is claimed so extra HoodPass tokens cannot grant another. */
+  includedPackClaimed: boolean;
   inventory: Inventory;
   play: SavedPlay | null;
   results: RoundResult[];

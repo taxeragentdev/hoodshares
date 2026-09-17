@@ -1,14 +1,14 @@
 import { CARDS, type CardDefinition } from "./cards";
+import { TOKEN_SYMBOL } from "./token";
 
 /** One pack is one playable Daily Lineup. Extra packs are inventory. */
 export const CARDS_PER_PACK = 5;
 
-/** Display ticker for the project's own ERC-20 until the Pons launch fills
- * `PACK_TOKEN_ADDRESS`. Not a claim that a token of this name exists yet. */
-export const PACK_TOKEN_SYMBOL = "HOOD";
+export const PACK_TOKEN_SYMBOL = TOKEN_SYMBOL;
 
-/** Demo-only price shown when the pack shop is not deployed. */
-export const DEMO_PACK_PRICE = 100;
+/** Extra packs on HoodShares, paid in $HS. HoodPass stays 0.001 ETH on OpenSea. */
+export const PACK_PRICE_HOOD = 50_000;
+export const PACK_PRICE_HOOD_LABEL = "50,000";
 
 export interface OpenedCard {
   card: CardDefinition;

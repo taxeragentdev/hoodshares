@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SESSION_LABEL } from "@/lib/game/session";
 import { REWARD_TOKEN } from "@/lib/game/leaderboard";
+import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 import { Section, SectionHeading } from "./ui/Section";
 
 const MODES = [
@@ -8,8 +9,9 @@ const MODES = [
     tag: "Daily",
     title: "Daily Lineup",
     cadence: SESSION_LABEL,
-    body: "Before the 09:30 ET open, pick five stock cards and call each one up or down. Your score is that stock's percent move from the official open. Lock a card to freeze it, or wait for the 16:00 ET close.",
+    body: `Before the 09:30 ET open, pick five stock cards and call each one up or down. Entry is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} at the start of the round. Your score is that stock's percent move from the official open. Lock a card to freeze it, or wait for the 16:00 ET close.`,
     points: [
+      `Season 1 entry is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} each round`,
       "Points equal today's percent change times 100",
       "Lock banks the move so far. Unlocked cards take the close.",
       "Using the same card twice cuts a win and raises a miss.",
@@ -18,12 +20,12 @@ const MODES = [
   },
   {
     tag: "Rewards",
-    title: "HOOD leaderboard",
-    cadence: "Settles at the close",
-    body: `When the session ends, ranks go up and the top ten split a ${REWARD_TOKEN} pool.`,
+    title: `Weekly ${REWARD_TOKEN}`,
+    cadence: "Pays after Friday's close",
+    body: `Play every weekday. Scores add up through Friday. Then the top ten split a weekly ${REWARD_TOKEN} pool.`,
     points: [
-      "Ranked by session score, not by wallet size",
-      `${REWARD_TOKEN} paid to the top ten`,
+      "Ranked by the week's total score, not by wallet size",
+      `${REWARD_TOKEN} paid once a week to the top ten`,
       "No round on weekends or US market holidays",
     ],
     accent: "#38bdf8",

@@ -3,7 +3,7 @@ import path from "node:path";
 import { getAddress } from "viem";
 import type { PlayerRecord } from "@/lib/player";
 import { formatTicketSerial, parseTicketSerial } from "@/lib/ticket";
-import { hasPostgres } from "./databaseUrl";
+import { creditPacks } from "@/lib/inventory";
 
 function dataDir(): string {
   if (process.env.HOODSHARES_DATA_DIR) return process.env.HOODSHARES_DATA_DIR;
@@ -31,6 +31,8 @@ export interface StoreFile {
   quotes: Record<string, SessionQuoteBook>;
   /** Highest 1-based HoodPass serial already given out. */
   ticketIssued: number;
+  /** Pack shop buy txs already credited to off-chain inventory. */
+  creditedPackTxs: Record<string, true>;
 }
 
 const emptyStore = (): StoreFile => ({
@@ -38,6 +40,7 @@ const emptyStore = (): StoreFile => ({
   players: {},
   quotes: {},
   ticketIssued: 0,
+  creditedPackTxs: {},
 });
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -49,8 +52,9 @@ async function readFileStore(): Promise<StoreFile> {
     return {
       nonces: parsed.nonces ?? {},
       players: parsed.players ?? {},
-      quotes: parsed.quotes ?? {},
-      ticketIssued: parsed.ticketIssued ?? 0,
+    quotes: parsed.quotes ?? {},
+    ticketIssued: parsed.ticketIssued ?? 0,
+    creditedPackTxs: parsed.creditedPackTxs ?? {},
     };
   } catch {
     return emptyStore();
@@ -109,6 +113,7 @@ export function emptyPlayer(address: `0x${string}`): PlayerRecord {
     ticketHeld: false,
     ticketSerial: null,
     freePackAvailable: false,
+    includedPackClaimed: false,
     inventory: { packs: 0, cards: {} },
     play: null,
     results: [],
@@ -123,6 +128,7 @@ export function ensurePlayer(store: StoreFile, address: `0x${string}`): PlayerRe
     existing.ticketHeld = Boolean(existing.ticketHeld);
     existing.ticketSerial = existing.ticketSerial ?? null;
     existing.freePackAvailable = Boolean(existing.freePackAvailable);
+    existing.includedPackClaimed = Boolean(existing.includedPackClaimed);
     return existing;
   }
   const created = emptyPlayer(address);
@@ -142,22 +148,45 @@ export function nextTicketSerial(store: StoreFile): string {
   return formatTicketSerial(highestTicketIssued(store) + 1);
 }
 
-/** First HoodPass on a wallet gets the next mint number, one pack grant, and keeps both. */
+/** First HoodPass on a wallet gets one included pack. Extra tokens do not. */
 export function issueTicket(store: StoreFile, record: PlayerRecord): void {
-  if (record.ticketHeld && record.ticketSerial) return;
-  const firstMint = !record.ticketHeld;
-  store.ticketIssued = highestTicketIssued(store) + 1;
+  if (record.ticketHeld && record.ticketSerial) {
+    if (record.includedPackClaimed) record.freePackAvailable = false;
+    return;
+  }
+  const firstWallet = !record.ticketHeld && !record.includedPackClaimed;
+  if (!record.ticketSerial) {
+    store.ticketIssued = highestTicketIssued(store) + 1;
+    record.ticketSerial = formatTicketSerial(store.ticketIssued);
+  }
   record.ticketHeld = true;
-  record.ticketSerial = formatTicketSerial(store.ticketIssued);
-  if (firstMint) record.freePackAvailable = true;
+  if (firstWallet) record.freePackAvailable = true;
+  if (record.includedPackClaimed) record.freePackAvailable = false;
 }
 
 export function claimIncludedPack(record: PlayerRecord): boolean {
-  if (!record.ticketHeld || !record.freePackAvailable) return false;
+  if (!record.ticketHeld || !record.freePackAvailable || record.includedPackClaimed) {
+    return false;
+  }
   record.freePackAvailable = false;
+  record.includedPackClaimed = true;
   record.inventory = {
     ...record.inventory,
     packs: record.inventory.packs + 1,
   };
+  return true;
+}
+
+export function creditPaidPacks(
+  store: StoreFile,
+  record: PlayerRecord,
+  txHash: string,
+  quantity: number,
+): boolean {
+  const key = txHash.toLowerCase();
+  if (store.creditedPackTxs[key]) return false;
+  if (quantity < 1) return false;
+  store.creditedPackTxs[key] = true;
+  record.inventory = creditPacks(record.inventory, quantity);
   return true;
 }

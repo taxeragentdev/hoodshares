@@ -2,12 +2,13 @@ import Link from "next/link";
 import { CARDS } from "@/lib/cards";
 import { HeroCardReel } from "@/components/HeroCardReel";
 import { TICKET_NAME } from "@/lib/ticket";
+import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 
 const STATS = [
   { value: String(CARDS.length), label: "Robinhood stocks" },
   { value: "5", label: "Cards per pack" },
-  { value: "HOOD", label: "Packs priced in" },
-  { value: "4663", label: "Robinhood chain ID" },
+  { value: "1", label: "HoodPass per wallet" },
+  { value: "1999", label: "Season 01 supply" },
 ];
 
 export function Hero() {
@@ -36,8 +37,9 @@ export function Hero() {
           </h1>
 
           <p className="text-ink-2 mt-6 max-w-lg text-lg leading-relaxed">
-            Buy HOOD later. Start with a {TICKET_NAME}, open a pack, play Daily
-            Lineup. Five cards against the tape.
+            Thirty stocks. Five cards. One session. Mint a {TICKET_NAME}, open a
+            pack, and play Daily Lineup against the live tape. Each round is{" "}
+            {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL}.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">

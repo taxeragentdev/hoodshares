@@ -57,14 +57,14 @@ export function LeaderboardBoard() {
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Today's pool"
+          label="This week's pool"
           value={`${SESSION_PRIZE_POOL.toLocaleString("en-US")} ${REWARD_TOKEN}`}
-          hint="Paid from the prize treasury after the close"
+          hint="Paid once a week after Friday's close"
         />
         <StatCard
           label="Field"
           value={String(board.length)}
-          hint="Lineups locked at the 09:30 ET open"
+          hint="Lineups lock each weekday at 09:30 ET"
         />
         <StatCard
           label="High score"
@@ -77,7 +77,7 @@ export function LeaderboardBoard() {
           hint={
             yourRow
               ? `${yourRow.score.toLocaleString("en-US")} pts`
-              : "Play Daily Lineup to land on this board"
+              : "Play Daily Lineup this week to land on this board"
           }
         />
       </div>
@@ -96,8 +96,8 @@ export function LeaderboardBoard() {
         <div className="border-line bg-surface-2 rounded-2xl border px-6 py-16 text-center">
           <h2 className="font-display text-ink text-xl font-bold">No scores yet</h2>
           <p className="text-ink-2 mx-auto mt-2 max-w-md text-sm leading-relaxed">
-            Today&apos;s board fills after Daily Lineup settles at 16:00 ET.
-            Set five calls before the 09:30 ET open.
+            This week's board adds each Daily Lineup score from Monday to
+            Friday. {REWARD_TOKEN} pays after Friday's 16:00 ET close.
           </p>
           <Link
             href="/play"
@@ -141,7 +141,7 @@ export function LeaderboardBoard() {
       )}
 
       <p className="text-ink-3 text-center text-xs leading-relaxed">
-        After the close, the top ten split a {REWARD_TOKEN} pool.{" "}
+        After Friday's close, the top ten split a weekly {REWARD_TOKEN} pool.{" "}
         <Link href="/play" className="text-ink hover:text-acid underline-offset-2 hover:underline">
           Run a lineup
         </Link>

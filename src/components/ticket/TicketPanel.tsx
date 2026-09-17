@@ -96,8 +96,9 @@ function DemoTicket() {
       </p>
       <h2 className="font-display text-ink mt-3 text-center text-xl font-bold">{TICKET_NAME}</h2>
       <p className="text-ink-2 mx-auto mt-2 max-w-md text-center text-sm leading-relaxed">
-        One HoodPass per wallet. Mint it on OpenSea. That pass includes one
-        pack you can claim here now or later.
+        One HoodPass per wallet. Extra passes on OpenSea do not add extra
+        packs. Mint it on OpenSea. That pass includes one pack you can claim
+        here now or later.
       </p>
 
       {status === "boot" && (
@@ -105,8 +106,23 @@ function DemoTicket() {
       )}
 
       {status === "guest" && (
-        <div className="mt-6 flex justify-center">
-          <ConnectWalletButton />
+        <div className="mt-6 space-y-3">
+          {openSeaMint ? (
+            <>
+              <OpenSeaMintLink className="bg-acid hover:bg-acid-dim block rounded-full py-3.5 text-center text-sm font-bold tracking-wide text-black uppercase transition-colors" />
+              <div className="flex justify-center">
+                <ConnectWalletButton />
+              </div>
+              <p className="text-ink-3 text-center text-xs leading-relaxed">
+                Mint on OpenSea, then connect this wallet to unlock the included
+                pack.
+              </p>
+            </>
+          ) : (
+            <div className="flex justify-center">
+              <ConnectWalletButton />
+            </div>
+          )}
         </div>
       )}
 
@@ -118,7 +134,7 @@ function DemoTicket() {
             onClick={() => void signIn()}
             className="bg-acid hover:bg-acid-dim rounded-full px-6 py-3 text-sm font-bold tracking-wide text-black uppercase transition-colors disabled:opacity-60"
           >
-            {signing ? "Check your wallet…" : "Sign to save"}
+            {signing ? "Check your wallet…" : "Sign in"}
           </button>
           {error && <p className="text-down mt-3 text-xs">{error}</p>}
         </div>
@@ -176,6 +192,12 @@ function DemoTicket() {
             <p className="text-ink-3 text-center text-xs leading-relaxed">
               The public drop will mint on OpenSea. Until that collection is
               live, you can mint one pass here to play.
+            </p>
+          )}
+          {openSeaMint && (
+            <p className="text-ink-3 text-center text-xs leading-relaxed">
+              Mint on OpenSea, then come back on this wallet. The included pack
+              stays until you claim it.
             </p>
           )}
           {syncError && <p className="text-down text-center text-xs">{syncError}</p>}

@@ -115,6 +115,35 @@ contract PackShopTest is Test {
         assertEq(opened, 2);
     }
 
+    function testBuyWithEthMintsAndPaysTreasury() public {
+        vm.prank(owner);
+        shop.setEthPackPrice(0.001 ether);
+
+        vm.deal(buyer, 1 ether);
+        vm.prank(buyer);
+        shop.buyPacksWithEth{value: 0.001 ether}(1);
+
+        assertEq(packs.balanceOf(buyer, packs.PACK_ID()), 1);
+        assertEq(address(treasury).balance, 0.001 ether);
+    }
+
+    function testBuyWithEthRejectsWrongValue() public {
+        vm.prank(owner);
+        shop.setEthPackPrice(0.001 ether);
+
+        vm.deal(buyer, 1 ether);
+        vm.prank(buyer);
+        vm.expectRevert("wrong eth");
+        shop.buyPacksWithEth{value: 0.002 ether}(1);
+    }
+
+    function testBuyWithEthFailsWhenPriceUnset() public {
+        vm.deal(buyer, 1 ether);
+        vm.prank(buyer);
+        vm.expectRevert("eth pack price not set");
+        shop.buyPacksWithEth{value: 0.001 ether}(1);
+    }
+
     function testCannotOpenWithoutAPack() public {
         vm.prank(buyer);
         vm.expectRevert();

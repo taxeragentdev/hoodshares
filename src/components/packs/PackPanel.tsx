@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { formatUnits } from "viem";
+import { formatEther, formatUnits } from "viem";
 import {
   useAccount,
+  useBalance,
   useReadContracts,
   useSwitchChain,
   useWaitForTransactionReceipt,
@@ -27,13 +28,14 @@ import {
 } from "@/lib/contracts";
 import {
   CARDS_PER_PACK,
-  DEMO_PACK_PRICE,
+  PACK_PRICE_HOOD_LABEL,
   PACK_TOKEN_SYMBOL,
   type OpenedCard,
 } from "@/lib/packs";
 
 export function PackPanel() {
   const { address, isConnected, chainId } = useAccount();
+  const { creditPaidPack } = useAuth();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const shopAddress = PACK_SHOP_ADDRESS[activeChain.id];
   const onWrongNetwork = isConnected && chainId !== activeChain.id;
@@ -44,6 +46,7 @@ export function PackPanel() {
           { address: shopAddress, abi: PACK_SHOP_ABI, functionName: "saleOpen" },
           { address: shopAddress, abi: PACK_SHOP_ABI, functionName: "packPrice" },
           { address: shopAddress, abi: PACK_SHOP_ABI, functionName: "paymentToken" },
+          { address: shopAddress, abi: PACK_SHOP_ABI, functionName: "ethPackPrice" },
         ]
       : undefined,
     query: { enabled: Boolean(shopAddress), refetchInterval: 15_000 },
@@ -52,7 +55,11 @@ export function PackPanel() {
   const saleOpen = shopData?.[0]?.result as boolean | undefined;
   const packPrice = shopData?.[1]?.result as bigint | undefined;
   const paymentToken = shopData?.[2]?.result as `0x${string}` | undefined;
+  const ethPackPrice = shopData?.[3]?.result as bigint | undefined;
   const tokenReady = Boolean(paymentToken && paymentToken !== ZERO_ADDRESS);
+  const hoodSale = tokenReady && packPrice !== undefined && packPrice > BigInt(0);
+  const ethSale = !hoodSale && Boolean(ethPackPrice && ethPackPrice > BigInt(0));
+  const [quantity, setQuantity] = useState(1);
 
   const { data: tokenData } = useReadContracts({
     contracts:
@@ -77,7 +84,10 @@ export function PackPanel() {
   const balance = tokenData?.[2]?.result as bigint | undefined;
   const allowance = tokenData?.[3]?.result as bigint | undefined;
 
-  const [quantity, setQuantity] = useState(1);
+  const { data: ethBalance } = useBalance({
+    address,
+    query: { enabled: ethSale && Boolean(address) },
+  });
 
   const { writeContract, data: txHash, isPending: isWriting, error: writeError, reset } =
     useWriteContract();
@@ -89,10 +99,29 @@ export function PackPanel() {
     tokenReady && packPrice !== undefined && allowance !== undefined
       ? allowance < packPrice * BigInt(quantity)
       : false;
+  const creditedTx = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isConfirmed || !txHash || needsApprove) return;
+    if (creditedTx.current === txHash) return;
+    creditedTx.current = txHash;
+    void creditPaidPack(txHash);
+  }, [isConfirmed, txHash, needsApprove, creditPaidPack]);
 
   function handleLiveAction() {
-    if (!shopAddress || !paymentToken || packPrice === undefined) return;
+    if (!shopAddress) return;
     reset();
+    if (ethSale && ethPackPrice !== undefined) {
+      writeContract({
+        address: shopAddress,
+        abi: PACK_SHOP_ABI,
+        functionName: "buyPacksWithEth",
+        args: [BigInt(quantity)],
+        value: ethPackPrice * BigInt(quantity),
+      });
+      return;
+    }
+    if (!paymentToken || packPrice === undefined) return;
     const cost = packPrice * BigInt(quantity);
     if (needsApprove) {
       writeContract({
@@ -135,14 +164,21 @@ export function PackPanel() {
     );
   }
 
-  const priceLabel =
-    packPrice !== undefined ? `${formatUnits(packPrice, tokenDecimals)} ${tokenSymbol}` : "TBD";
-  const totalLabel =
-    packPrice !== undefined
+  const ethTotal =
+    ethSale && ethPackPrice !== undefined ? ethPackPrice * BigInt(quantity) : undefined;
+  const priceLabel = ethSale && ethPackPrice !== undefined
+    ? `${formatEther(ethPackPrice)} ETH`
+    : packPrice !== undefined
+      ? `${formatUnits(packPrice, tokenDecimals)} ${tokenSymbol}`
+      : "TBD";
+  const totalLabel = ethSale && ethTotal !== undefined
+    ? `${formatEther(ethTotal)} ETH`
+    : packPrice !== undefined
       ? `${formatUnits(packPrice * BigInt(quantity), tokenDecimals)} ${tokenSymbol}`
       : "TBD";
-  const canAfford =
-    balance !== undefined && packPrice !== undefined
+  const canAfford = ethSale
+    ? Boolean(ethBalance && ethTotal !== undefined && ethBalance.value >= ethTotal)
+    : balance !== undefined && packPrice !== undefined
       ? balance >= packPrice * BigInt(quantity)
       : false;
 
@@ -150,10 +186,10 @@ export function PackPanel() {
     if (isWriting) return "Confirm in wallet…";
     if (isConfirming) return "Buying…";
     if (!isConnected) return "Connect a wallet to buy packs";
-    if (!tokenReady) return "Project token not set yet";
+    if (!ethSale && !tokenReady) return "Project token not set yet";
     if (saleOpen === false) return "Pack sale closed";
     if (!canAfford) return `Need ${totalLabel}`;
-    if (needsApprove) return `Approve ${totalLabel}`;
+    if (!ethSale && needsApprove) return `Approve ${totalLabel}`;
     return `Buy ${quantity} pack${quantity === 1 ? "" : "s"} for ${totalLabel}`;
   })();
 
@@ -169,13 +205,19 @@ export function PackPanel() {
           </p>
           <p className="font-display text-ink mt-1 text-2xl font-bold tabular">{priceLabel}</p>
           <p className="text-ink-3 mt-1 font-mono text-xs">
-            {CARDS_PER_PACK} cards. Paid in {tokenSymbol}.
+            {CARDS_PER_PACK} cards. Minted here
+            {ethSale ? " in ETH" : ` in ${tokenSymbol}`}.
           </p>
         </div>
         <QuantityStepper quantity={quantity} onChange={setQuantity} />
       </div>
 
-      {balance !== undefined && (
+      {ethSale && ethBalance && (
+        <p className="text-ink-3 mt-3 font-mono text-xs">
+          Wallet: {formatEther(ethBalance.value)} ETH
+        </p>
+      )}
+      {!ethSale && balance !== undefined && (
         <p className="text-ink-3 mt-3 font-mono text-xs">
           Wallet: {formatUnits(balance, tokenDecimals)} {tokenSymbol}
         </p>
@@ -187,7 +229,7 @@ export function PackPanel() {
         type="button"
         disabled={
           !isConnected ||
-          !tokenReady ||
+          (!ethSale && !tokenReady) ||
           saleOpen === false ||
           !canAfford ||
           isWriting ||
@@ -242,13 +284,14 @@ function DemoPack() {
     <div className="space-y-6">
       <div className="border-line bg-surface-2 rounded-2xl border p-6 sm:p-8">
         <span className="border-acid/30 bg-acid/10 text-acid inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
-          {DEMO_PACK_PRICE} {PACK_TOKEN_SYMBOL} when the sale opens
+          {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL} per pack
         </span>
         <h2 className="font-display text-ink mt-4 text-xl font-bold">Sealed packs</h2>
         <p className="text-ink-2 mt-2 text-sm leading-relaxed">
           Tear one open for {CARDS_PER_PACK} stock cards. Enough for one Daily
-          Lineup. HoodPass includes one pack. Claim it now or later, then buy
-          more when you want another hand.
+          Lineup. HoodPass includes one pack on this wallet, even if OpenSea
+          let you mint more than one pass. Extra packs mint here for{" "}
+          {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL}.
         </p>
 
         <p className="text-ink-3 mt-4 font-mono text-xs">
@@ -262,7 +305,7 @@ function DemoPack() {
             </div>
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !grantOpen}
               onClick={() => void handleMint()}
               className="bg-acid hover:bg-acid-dim mt-6 w-full rounded-full py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors disabled:opacity-60"
             >
@@ -270,11 +313,17 @@ function DemoPack() {
                 ? "Getting a pack…"
                 : grantOpen
                   ? "Claim included pack"
-                  : "Buy a pack"}
+                  : "Extra packs mint here"}
             </button>
-            {grantOpen && (
+            {grantOpen ? (
               <p className="text-ink-3 mt-3 text-center text-xs">
-                Included with your HoodPass. It stays on this wallet until you claim it.
+                Included with your HoodPass. One pack per wallet.
+              </p>
+            ) : (
+              <p className="text-ink-3 mt-3 text-center text-xs">
+                Extra packs are {PACK_PRICE_HOOD_LABEL}{" "}
+                {PACK_TOKEN_SYMBOL} on this site once {PACK_TOKEN_SYMBOL} and
+                the pack shop are live.
               </p>
             )}
           </>

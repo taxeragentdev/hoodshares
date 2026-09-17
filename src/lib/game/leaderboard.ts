@@ -1,13 +1,14 @@
 import { PACK_TOKEN_SYMBOL } from "@/lib/packs";
 import type { Direction } from "./types";
 
-/** Share of each session's HOOD prize pool, top 10 only. Rank 11+ is rank only. */
+/** Share of the weekly $HS prize pool, top 10 only. Rank 11+ is rank only. */
 export const LEADERBOARD_PAYOUT_BPS = [
   4000, 2000, 1200, 800, 500, 400, 400, 300, 200, 200,
 ] as const;
 
-/** HOOD paid this session. Stays 0 until the prize pool is funded. */
-export const SESSION_PRIZE_POOL = 0;
+/** $HS paid this week. Stays 0 until the prize pool is funded. */
+export const WEEKLY_PRIZE_POOL = 0;
+export const SESSION_PRIZE_POOL = WEEKLY_PRIZE_POOL;
 export const PAID_RANKS = LEADERBOARD_PAYOUT_BPS.length;
 
 export interface LineupChip {

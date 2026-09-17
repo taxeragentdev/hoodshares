@@ -15,6 +15,8 @@ interface LineupBuilderProps {
   onStart: () => void;
   startLabel?: string;
   startEnabled?: boolean;
+  startBusy?: boolean;
+  hint?: string;
 }
 
 export function LineupBuilder({
@@ -26,6 +28,8 @@ export function LineupBuilder({
   onStart,
   startLabel = "Lock lineup",
   startEnabled = true,
+  startBusy = false,
+  hint,
 }: LineupBuilderProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const isFull = lineup.length >= LINEUP_SIZE;
@@ -134,12 +138,15 @@ export function LineupBuilder({
 
         <button
           type="button"
-          disabled={!isFull || !startEnabled}
+          disabled={!isFull || !startEnabled || startBusy}
           onClick={onStart}
           className="bg-acid hover:bg-acid-dim mt-5 w-full rounded-full py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-25"
         >
-          {isFull ? startLabel : `Pick ${LINEUP_SIZE - lineup.length} more`}
+          {startBusy ? "Check your wallet…" : isFull ? startLabel : `Pick ${LINEUP_SIZE - lineup.length} more`}
         </button>
+        {hint && (
+          <p className="text-ink-3 mt-3 text-center text-xs leading-relaxed">{hint}</p>
+        )}
       </div>
 
       <div className="mt-8">
