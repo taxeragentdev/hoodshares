@@ -3,6 +3,7 @@ import path from "node:path";
 import { getAddress } from "viem";
 import type { PlayerRecord } from "@/lib/player";
 import { formatTicketSerial, parseTicketSerial } from "@/lib/ticket";
+import { hasPostgres } from "./databaseUrl";
 
 function dataDir(): string {
   if (process.env.HOODSHARES_DATA_DIR) return process.env.HOODSHARES_DATA_DIR;
@@ -66,7 +67,7 @@ async function writeFileStore(store: StoreFile): Promise<void> {
 }
 
 async function readStore(): Promise<StoreFile> {
-  if (process.env.DATABASE_URL) {
+  if (hasPostgres()) {
     const { readPostgresStore } = await import("./postgres");
     return readPostgresStore();
   }
@@ -77,7 +78,7 @@ async function readStore(): Promise<StoreFile> {
 }
 
 async function writeStore(store: StoreFile): Promise<void> {
-  if (process.env.DATABASE_URL) {
+  if (hasPostgres()) {
     const { writePostgresStore } = await import("./postgres");
     await writePostgresStore(store);
     return;

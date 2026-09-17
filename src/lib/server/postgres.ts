@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { postgresConnectionString } from "./databaseUrl";
 import type { StoreFile } from "./store";
 
 const emptyStore = (): StoreFile => ({
@@ -12,11 +13,12 @@ let client: ReturnType<typeof postgres> | null = null;
 let ready = false;
 
 function db() {
-  if (!process.env.DATABASE_URL) {
+  const url = postgresConnectionString();
+  if (!url) {
     throw new Error("DATABASE_URL is not set");
   }
   if (!client) {
-    client = postgres(process.env.DATABASE_URL, { max: 1, idle_timeout: 20 });
+    client = postgres(url, { max: 1, idle_timeout: 20, ssl: "require" });
   }
   return client;
 }
