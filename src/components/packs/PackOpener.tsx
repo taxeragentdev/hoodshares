@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AssetCard } from "@/components/AssetCard";
 import { cardTicker } from "@/lib/cards";
 import type { OpenedCard } from "@/lib/packs";
@@ -13,6 +13,7 @@ interface PackOpenerProps {
   onOpen: () => boolean | Promise<boolean>;
   onClear: () => void;
   resetLabel?: string;
+  idleIntro?: ReactNode;
 }
 
 function prefersReducedMotion(): boolean {
@@ -20,7 +21,13 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function PackOpener({ opened, onOpen, onClear, resetLabel = "Open another" }: PackOpenerProps) {
+export function PackOpener({
+  opened,
+  onOpen,
+  onClear,
+  resetLabel = "Open another",
+  idleIntro,
+}: PackOpenerProps) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [tear, setTear] = useState(0);
   const [lift, setLift] = useState(0);
@@ -207,34 +214,36 @@ export function PackOpener({ opened, onOpen, onClear, resetLabel = "Open another
   const packHiding = phase === "bursting";
   const spread = phase === "bursting" || phase === "done";
 
+  const idle = phase === "idle";
+
   return (
-    <div className={phase === "idle" ? "" : "mt-6"}>
+    <div className={idle ? "" : "mt-6"}>
       <div
         className={
-          phase === "idle"
-            ? "grid items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(280px,1fr)] lg:gap-12"
+          idle
+            ? "grid items-center gap-6 sm:gap-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-12"
             : undefined
         }
       >
-      <div
-        ref={sceneRef}
-        role="img"
-        aria-label="HoodShares booster pack. Drag across it or tap to tear it open."
-        className={`relative touch-none select-none transition-[max-width,min-height] duration-500 ${
-          spread || stacked
-            ? "mx-auto min-h-[300px] w-full max-w-3xl sm:min-h-[340px]"
-            : "mx-auto aspect-[1024/1536] h-[min(48svh,22rem)] w-auto sm:h-[min(56svh,28rem)] lg:mx-0 lg:ml-auto lg:h-[min(calc(100svh-14rem),30rem)]"
-        }`}
-        onPointerDown={showPack ? handlePointerDown : undefined}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onPointerLeave={() => {
-          if (phase !== "idle") return;
-          tiltTarget.current = { x: 5, y: -6 };
-          shineTarget.current = { x: 42, y: 28 };
-        }}
-      >
+        <div
+          ref={sceneRef}
+          role="img"
+          aria-label="HoodShares booster pack. Drag across it or tap to tear it open."
+          className={`relative touch-none select-none ${
+            spread || stacked
+              ? "mx-auto min-h-[300px] w-full max-w-3xl sm:min-h-[340px]"
+              : "mx-auto aspect-[1024/1536] w-[min(100%,18rem)] shrink-0 sm:w-[20rem] lg:mx-0 lg:ml-auto"
+          }`}
+          onPointerDown={showPack ? handlePointerDown : undefined}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onPointerLeave={() => {
+            if (phase !== "idle") return;
+            tiltTarget.current = { x: 5, y: -6 };
+            shineTarget.current = { x: 42, y: 28 };
+          }}
+        >
         {cardsLive && opened && (
           <div className="relative z-0 grid grid-cols-5 items-start gap-2 pt-1 sm:gap-3">
             {opened.map((item, index) => {
@@ -282,9 +291,13 @@ export function PackOpener({ opened, onOpen, onClear, resetLabel = "Open another
 
         {showPack && (
           <div
-            className={`absolute inset-0 z-20 ${
-              phase === "idle" ? "cursor-grab active:cursor-grabbing" : ""
-            }`}
+            className={
+              idle
+                ? `h-full w-full ${phase === "idle" ? "cursor-grab active:cursor-grabbing" : ""}`
+                : `absolute top-0 left-1/2 z-20 w-full max-w-[248px] -translate-x-1/2 ${
+                    phase === "idle" ? "cursor-grab active:cursor-grabbing" : ""
+                  }`
+            }
             style={{
               opacity: packHiding ? 0 : 1,
               transform: packHiding ? "translateY(48px) scale(0.82)" : undefined,
@@ -307,9 +320,10 @@ export function PackOpener({ opened, onOpen, onClear, resetLabel = "Open another
         )}
       </div>
 
-      {phase === "idle" && (
+      {idle && (
         <div className="flex min-w-0 flex-col justify-center">
-          <p className="text-ink-2 text-sm leading-relaxed">
+          {idleIntro}
+          <p className="text-ink-2 mt-4 text-sm leading-relaxed">
             Drag across the pack to tear it, or tap the button.
           </p>
           <button

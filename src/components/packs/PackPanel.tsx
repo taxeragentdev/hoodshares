@@ -294,21 +294,25 @@ function DemoPack() {
   return (
     <div className="space-y-6">
       {showOpener ? (
-        <div className="border-line bg-surface overflow-hidden rounded-3xl border p-5 sm:p-8">
-          <p className="text-acid font-mono text-[10px] tracking-[0.2em] uppercase">
-            {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL} per pack
-          </p>
-          <h1 className="font-display text-ink mt-3 text-3xl font-bold tracking-tight">
-            Open a pack
-          </h1>
-          <p className="text-ink-3 mt-2 font-mono text-xs">
-            Sealed packs {inventory.packs} · Cards {totalCards(inventory)}
-          </p>
+        <div className="border-line bg-surface overflow-visible rounded-3xl border p-5 sm:p-8 lg:p-10">
           <PackOpener
             opened={opened}
             onOpen={handleOpen}
             onClear={() => setOpened(null)}
             resetLabel={inventory.packs > 0 ? "Open another" : "Done"}
+            idleIntro={
+              <>
+                <p className="text-acid font-mono text-[10px] tracking-[0.2em] uppercase">
+                  {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL} per pack
+                </p>
+                <h1 className="font-display text-ink mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                  Open a pack
+                </h1>
+                <p className="text-ink-3 mt-2 font-mono text-xs">
+                  Sealed packs {inventory.packs} · Cards {totalCards(inventory)}
+                </p>
+              </>
+            }
           />
         </div>
       ) : (
@@ -403,7 +407,7 @@ function DemoPack() {
 
 function PackVisual({ children }: { children: ReactNode }) {
   return (
-    <div className="aspect-[1024/1536] h-[min(48svh,22rem)] sm:h-[min(56svh,28rem)] lg:h-[min(calc(100svh-11rem),34rem)]">
+    <div className="aspect-[1024/1536] w-[min(100%,18rem)] sm:w-[20rem] lg:w-[22rem]">
       {children}
     </div>
   );
@@ -417,8 +421,8 @@ function PackLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="border-line bg-surface overflow-hidden rounded-3xl border">
-      <div className="grid items-center gap-6 p-5 sm:gap-8 sm:p-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(280px,1fr)] lg:gap-12 lg:p-10">
+    <div className="border-line bg-surface overflow-visible rounded-3xl border">
+      <div className="grid items-center gap-6 p-5 sm:gap-8 sm:p-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-12 lg:p-10">
         <div className="flex justify-center lg:justify-end">{visual}</div>
         <div className="flex min-w-0 flex-col justify-center lg:py-2">{children}</div>
       </div>
