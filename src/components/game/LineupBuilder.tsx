@@ -13,6 +13,8 @@ interface LineupBuilderProps {
   onRemove: (slotId: string) => void;
   onToggleDirection: (slotId: string) => void;
   onStart: () => void;
+  startLabel?: string;
+  startEnabled?: boolean;
 }
 
 export function LineupBuilder({
@@ -22,6 +24,8 @@ export function LineupBuilder({
   onRemove,
   onToggleDirection,
   onStart,
+  startLabel = "Lock lineup",
+  startEnabled = true,
 }: LineupBuilderProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const isFull = lineup.length >= LINEUP_SIZE;
@@ -130,11 +134,11 @@ export function LineupBuilder({
 
         <button
           type="button"
-          disabled={!isFull}
+          disabled={!isFull || !startEnabled}
           onClick={onStart}
           className="bg-acid hover:bg-acid-dim mt-5 w-full rounded-full py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-25"
         >
-          {isFull ? "Start round" : `Pick ${LINEUP_SIZE - lineup.length} more`}
+          {isFull ? startLabel : `Pick ${LINEUP_SIZE - lineup.length} more`}
         </button>
       </div>
 

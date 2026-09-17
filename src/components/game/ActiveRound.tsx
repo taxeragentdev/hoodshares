@@ -3,36 +3,32 @@
 import { AssetCard } from "@/components/AssetCard";
 import { CARDS } from "@/lib/cards";
 import { copyIndexOf, pointsForPick, totalScore, ROUND_SCORE_CAP } from "@/lib/game/scoring";
-import { pctMoveAtProgress } from "@/lib/game/simulate";
 import type { LineupPick } from "@/lib/game/types";
 
 interface ActiveRoundProps {
   lineup: LineupPick[];
-  paths: Record<string, number[]>;
+  moves: Record<string, number | null>;
   progress: number;
   timeLeftLabel: string;
-  roundNumber: number;
   onLock: (slotId: string) => void;
 }
 
 export function ActiveRound({
   lineup,
-  paths,
+  moves,
   progress,
   timeLeftLabel,
-  roundNumber,
   onLock,
 }: ActiveRoundProps) {
   const cardIds = lineup.map((pick) => pick.cardId);
 
   const rows = lineup.map((pick, index) => {
     const card = CARDS.find((c) => c.id === pick.cardId)!;
-    const path = paths[pick.cardId] ?? [0];
-    const effectiveProgress = pick.locked ? (pick.lockedAtProgress ?? progress) : progress;
-    const pctMove = pctMoveAtProgress(path, effectiveProgress);
+    const pctMove = moves[pick.cardId] ?? 0;
     const copyIndex = copyIndexOf(cardIds, index);
     const points = pointsForPick(pctMove, pick.direction, copyIndex);
-    return { pick, card, pctMove, copyIndex, points };
+    const waiting = moves[pick.cardId] == null;
+    return { pick, card, pctMove, copyIndex, points, waiting };
   });
 
   const total = totalScore(rows.map((row) => row.points));
@@ -42,13 +38,13 @@ export function ActiveRound({
     <div>
       <div className="text-center">
         <span className="bg-acid/15 text-acid rounded-full px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] uppercase">
-          Round {roundNumber}
+          Daily Lineup
         </span>
         <h2 className="font-display text-ink mt-3 text-2xl font-bold tracking-wide uppercase">
-          Active Round
+          Session live
         </h2>
         <p className="text-ink-3 mt-1 font-mono text-sm tabular">
-          {timeLeftLabel} left, {lockedCount}/{lineup.length} locked
+          {timeLeftLabel} to the close, {lockedCount}/{lineup.length} locked
         </p>
       </div>
 
@@ -60,7 +56,7 @@ export function ActiveRound({
       </div>
 
       <div className="mt-8 grid grid-cols-5 gap-2 sm:gap-4">
-        {rows.map(({ pick, card, pctMove, copyIndex, points }) => (
+        {rows.map(({ pick, card, pctMove, copyIndex, points, waiting }) => (
           <div key={pick.slotId} className="flex flex-col">
             <div className="relative">
               <AssetCard card={card} size="md" locked={pick.locked} />
@@ -79,10 +75,13 @@ export function ActiveRound({
             </div>
 
             <p
-              className={`mt-2.5 text-center font-mono text-[13px] tabular ${pctMove >= 0 ? "text-up" : "text-down"}`}
+              className={`mt-2.5 text-center font-mono text-[13px] tabular ${
+                waiting ? "text-ink-3" : pctMove >= 0 ? "text-up" : "text-down"
+              }`}
             >
-              {pctMove >= 0 ? "+" : ""}
-              {pctMove.toFixed(2)}%
+              {waiting
+                ? "Waiting on tape"
+                : `${pctMove >= 0 ? "+" : ""}${pctMove.toFixed(2)}%`}
             </p>
             <p
               className={`text-center font-mono text-base font-bold tabular ${points >= 0 ? "text-up" : "text-down"}`}

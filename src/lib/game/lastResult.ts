@@ -2,7 +2,7 @@ import { payoutForRank, type LeaderboardRow, type LineupChip } from "./leaderboa
 
 export const LAST_RESULT_KEY = "hoodshares.lastResult.v1";
 
-/** Used when the player finishes a demo round without a connected wallet. */
+/** Used when comparing a row to the connected wallet. */
 export const YOU_ADDRESS = "0x1111111111111111111111111111111111111111" as const;
 
 export interface LastResult {

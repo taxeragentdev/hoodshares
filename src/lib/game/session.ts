@@ -7,9 +7,7 @@
  * the moment a player locks a card). A UTC-midnight round would score
  * overnight noise and weekend gaps that the underlying exchange does not.
  *
- * Weekends and US market holidays have no Daily Lineup. The demo on /play
- * compresses one session into ROUND_DURATION_MS so the lock mechanic is
- * visible without waiting for the bell.
+ * Weekends and US market holidays have no Daily Lineup.
  */
 
 export const SESSION_TIME_ZONE = "America/New_York";
@@ -24,6 +22,7 @@ interface NyClock {
   weekday: number;
   hour: number;
   minute: number;
+  second: number;
 }
 
 function nyClock(now = new Date()): NyClock {
@@ -32,6 +31,7 @@ function nyClock(now = new Date()): NyClock {
     weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   }).formatToParts(now);
 
@@ -41,7 +41,8 @@ function nyClock(now = new Date()): NyClock {
   // Some runtimes emit 24 for midnight when hour12 is false.
   if (hour === 24) hour = 0;
   const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
-  return { weekday, hour, minute };
+  const second = Number(parts.find((p) => p.type === "second")?.value ?? 0);
+  return { weekday, hour, minute, second };
 }
 
 function minutesSinceMidnight(hour: number, minute: number): number {
@@ -70,4 +71,27 @@ export function sessionPhaseLabel(phase: SessionPhase = sessionPhase()): string 
     case "closed":
       return "Session settled at the 16:00 ET close";
   }
+}
+
+function secondsSinceMidnight(hour: number, minute: number, second = 0): number {
+  return hour * 3600 + minute * 60 + second;
+}
+
+/** 0 at the 09:30 ET open, 1 at the 16:00 ET close. */
+export function sessionProgress(now = new Date()): number {
+  const phase = sessionPhase(now);
+  if (phase === "weekend" || phase === "preopen") return 0;
+  if (phase === "closed") return 1;
+  const { hour, minute, second } = nyClock(now);
+  const nowSec = secondsSinceMidnight(hour, minute, second);
+  const openSec = secondsSinceMidnight(SESSION_OPEN.hour, SESSION_OPEN.minute);
+  const closeSec = secondsSinceMidnight(SESSION_CLOSE.hour, SESSION_CLOSE.minute);
+  return Math.min(1, Math.max(0, (nowSec - openSec) / (closeSec - openSec)));
+}
+
+export function msUntilSessionClose(now = new Date()): number {
+  const { hour, minute, second } = nyClock(now);
+  const nowSec = secondsSinceMidnight(hour, minute, second);
+  const closeSec = secondsSinceMidnight(SESSION_CLOSE.hour, SESSION_CLOSE.minute);
+  return Math.max(0, (closeSec - nowSec) * 1000);
 }

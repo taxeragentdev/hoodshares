@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SavedPlay } from "@/lib/game/types";
 import { LINEUP_SIZE } from "@/lib/game/types";
+import { sessionId } from "@/lib/game/sessionId";
 import { sessionAddress } from "@/lib/server/auth";
 import { expireActivePlay, snapshot, stampLocks } from "@/lib/server/play";
 import {
@@ -33,7 +34,10 @@ export async function PUT(request: Request) {
     expireActivePlay(record, book);
     if (!record.ticketHeld) return null;
     if (record.play?.phase === "settled" && play.phase !== "settled") {
-      return snapshot(record);
+      const last = record.results.at(-1);
+      if (last?.sessionId === sessionId()) {
+        return snapshot(record);
+      }
     }
     record.play = stampLocks(record.play, {
       phase: play.phase,

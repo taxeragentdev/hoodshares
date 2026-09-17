@@ -1,8 +1,8 @@
 import { CARDS } from "@/lib/cards";
 import { copyIndexOf, pointsForPick, totalScore } from "@/lib/game/scoring";
+import { sessionPhase } from "@/lib/game/session";
 import { sessionId } from "@/lib/game/sessionId";
-import { buildPricePath, pctMoveAtProgress } from "@/lib/game/simulate";
-import { ROUND_DURATION_MS, type SavedPlay } from "@/lib/game/types";
+import { LINEUP_SIZE, type SavedPlay } from "@/lib/game/types";
 import type { PlayerRecord, PlayerSnapshot, RoundResult } from "@/lib/player";
 import { livePctMove } from "@/lib/server/prices";
 import type { SessionQuoteBook } from "@/lib/server/store";
@@ -47,9 +47,7 @@ export function scoreSavedPlay(
   const cardIds = play.lineup.map((pick) => pick.cardId);
   const points = play.lineup.map((pick, index) => {
     const live = livePctMove(book ?? null, pick.cardId, pick.lockedUsd);
-    const path = buildPricePath(`${play.roundId}:${pick.cardId}`);
-    const pctMove = live ?? pctMoveAtProgress(path, pick.lockedAtProgress ?? 1);
-    return pointsForPick(pctMove, pick.direction, copyIndexOf(cardIds, index));
+    return pointsForPick(live ?? 0, pick.direction, copyIndexOf(cardIds, index));
   });
   return totalScore(points);
 }
@@ -66,9 +64,18 @@ export function expireActivePlay(
   book?: SessionQuoteBook | null,
 ): void {
   const play = player.play;
-  if (!play || play.phase !== "active") return;
-  if (Date.now() - play.startedAt < ROUND_DURATION_MS) return;
-  settlePlayerRound(player, book);
+  if (!play || play.lineup.length < LINEUP_SIZE) return;
+  if (play.phase === "settled") return;
+
+  const today = sessionId();
+  const market = sessionPhase();
+  const isTodaysLineup = play.roundId === today;
+  const sessionOver = market === "closed" || market === "weekend";
+  const leftoverFromPriorDay = Boolean(play.roundId) && play.roundId !== today;
+
+  if (leftoverFromPriorDay || (isTodaysLineup && sessionOver)) {
+    settlePlayerRound(player, book);
+  }
 }
 
 export function settlePlayerRound(
@@ -81,7 +88,7 @@ export function settlePlayerRound(
   const existing = player.results.find((row) => row.roundId === play.roundId);
   if (existing) return existing;
   const result: RoundResult = {
-    sessionId: sessionId(),
+    sessionId: play.roundId || sessionId(),
     roundId: play.roundId,
     score: Math.round(scoreSavedPlay(play, book)),
     lineup: chipsFromPlay(play),

@@ -70,6 +70,9 @@ async function readStore(): Promise<StoreFile> {
     const { readPostgresStore } = await import("./postgres");
     return readPostgresStore();
   }
+  if (process.env.VERCEL) {
+    throw new Error("DATABASE_URL is required on Vercel");
+  }
   return readFileStore();
 }
 
@@ -78,6 +81,9 @@ async function writeStore(store: StoreFile): Promise<void> {
     const { writePostgresStore } = await import("./postgres");
     await writePostgresStore(store);
     return;
+  }
+  if (process.env.VERCEL) {
+    throw new Error("DATABASE_URL is required on Vercel");
   }
   await writeFileStore(store);
 }

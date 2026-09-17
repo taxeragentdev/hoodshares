@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { api } from "@/lib/api";
 import {
-  DEMO_LEADERBOARD,
-  DEMO_PRIZE_POOL,
-  DEMO_TOP_SCORE,
+  SESSION_PRIZE_POOL,
   LEADERBOARD_PAYOUT_BPS,
   PAID_RANKS,
   REWARD_TOKEN,
@@ -26,7 +24,8 @@ import {
 export function LeaderboardBoard() {
   const { address } = useAccount();
   const [phase, setPhase] = useState<SessionPhase>("closed");
-  const [board, setBoard] = useState<LeaderboardRow[]>(DEMO_LEADERBOARD);
+  const [board, setBoard] = useState<LeaderboardRow[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     setPhase(sessionPhase());
@@ -36,7 +35,10 @@ export function LeaderboardBoard() {
         if (!cancelled) setBoard(data.board);
       })
       .catch(() => {
-        if (!cancelled) setBoard(DEMO_LEADERBOARD);
+        if (!cancelled) setBoard([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
       });
     return () => {
       cancelled = true;
@@ -47,16 +49,17 @@ export function LeaderboardBoard() {
   const live = phase === "open";
   const podium = board.slice(0, 3);
   const field = board.slice(3);
-  const topScore = board[0]?.score ?? DEMO_TOP_SCORE;
+  const topScore = board[0]?.score ?? 0;
   const yourRow = board.find((row) => isYouAddress(row.address, address));
+  const empty = loaded && board.length === 0;
 
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Today's pool"
-          value={`${DEMO_PRIZE_POOL.toLocaleString("en-US")} ${REWARD_TOKEN}`}
-          hint="Top ten split this. Rank 11+ is rank only."
+          value={`${SESSION_PRIZE_POOL.toLocaleString("en-US")} ${REWARD_TOKEN}`}
+          hint="Paid from the prize treasury after the close"
         />
         <StatCard
           label="Field"
@@ -89,6 +92,22 @@ export function LeaderboardBoard() {
         <p className="text-ink-3 font-mono text-xs">{SESSION_LABEL}</p>
       </div>
 
+      {empty ? (
+        <div className="border-line bg-surface-2 rounded-2xl border px-6 py-16 text-center">
+          <h2 className="font-display text-ink text-xl font-bold">No scores yet</h2>
+          <p className="text-ink-2 mx-auto mt-2 max-w-md text-sm leading-relaxed">
+            Today&apos;s board fills after Daily Lineup settles at 16:00 ET.
+            Set five calls before the 09:30 ET open.
+          </p>
+          <Link
+            href="/play"
+            className="bg-acid hover:bg-acid-dim mt-6 inline-block rounded-full px-6 py-3 text-sm font-bold tracking-wide text-black uppercase transition-colors"
+          >
+            Daily Lineup
+          </Link>
+        </div>
+      ) : (
+        <>
       <div className="grid items-end gap-3 md:grid-cols-3">
         <PodiumCard row={podium[0]} place="first" you={yourRow?.rank === podium[0]?.rank} />
         <PodiumCard row={podium[1]} place="second" you={yourRow?.rank === podium[1]?.rank} />
@@ -118,6 +137,8 @@ export function LeaderboardBoard() {
       </div>
 
       <PayoutSplit />
+        </>
+      )}
 
       <p className="text-ink-3 text-center text-xs leading-relaxed">
         After the close, the top ten split a {REWARD_TOKEN} pool.{" "}

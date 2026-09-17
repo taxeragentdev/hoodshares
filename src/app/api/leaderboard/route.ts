@@ -1,6 +1,5 @@
 import { connection, NextResponse } from "next/server";
-import { boardWithPlayer } from "@/lib/game/lastResult";
-import { DEMO_LEADERBOARD } from "@/lib/game/leaderboard";
+import { buildLeaderboard } from "@/lib/game/leaderboard";
 import { sessionId } from "@/lib/game/sessionId";
 import { expireActivePlay } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
@@ -10,8 +9,8 @@ export async function GET() {
   await connection();
   const today = sessionId();
   const book = await sessionQuotes();
-  const rows = await withStore((store) => {
-    const results = Object.values(store.players).flatMap((player) => {
+  const entries = await withStore((store) => {
+    return Object.values(store.players).flatMap((player) => {
       expireActivePlay(player, book);
       const latest = [...player.results].reverse().find((row) => row.sessionId === today);
       if (!latest) return [];
@@ -23,17 +22,7 @@ export async function GET() {
         },
       ];
     });
-    return results;
   });
 
-  let board = DEMO_LEADERBOARD;
-  for (const row of rows) {
-    board = boardWithPlayer(board, {
-      address: row.address,
-      score: row.score,
-      lineup: row.lineup,
-    });
-  }
-
-  return NextResponse.json({ board });
+  return NextResponse.json({ board: buildLeaderboard(entries) });
 }

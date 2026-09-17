@@ -27,6 +27,3 @@ export interface SavedPlay {
   startedAt: number;
   slotCounter: number;
 }
-
-/** Round length on /play until live sessions use the full NYSE clock. */
-export const ROUND_DURATION_MS = 90_000;

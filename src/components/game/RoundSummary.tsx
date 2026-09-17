@@ -4,41 +4,31 @@ import Link from "next/link";
 import { AssetCard } from "@/components/AssetCard";
 import { CARDS } from "@/lib/cards";
 import { copyIndexOf, pointsForPick, totalScore } from "@/lib/game/scoring";
-import { pctMoveAtProgress } from "@/lib/game/simulate";
 import type { LineupPick } from "@/lib/game/types";
 
 interface RoundSummaryProps {
   lineup: LineupPick[];
-  paths: Record<string, number[]>;
-  roundNumber: number;
+  moves: Record<string, number | null>;
+  rank: number | null;
+  canPlayAgain: boolean;
   onPlayAgain: () => void;
-}
-
-/** Placeholder standing until real contests run against a live field.
- * Deliberately derived from the score so the number moves with performance
- * instead of pretending to be a real leaderboard position. */
-function estimateRank(total: number): number {
-  const field = 23_082;
-  const percentile = 1 / (1 + Math.exp(total / 400));
-  return Math.max(1, Math.round(field * percentile));
 }
 
 export function RoundSummary({
   lineup,
-  paths,
-  roundNumber,
+  moves,
+  rank,
+  canPlayAgain,
   onPlayAgain,
 }: RoundSummaryProps) {
   const cardIds = lineup.map((pick) => pick.cardId);
 
   const rows = lineup.map((pick, index) => {
     const card = CARDS.find((c) => c.id === pick.cardId)!;
-    const path = paths[pick.cardId] ?? [0];
-    const finalProgress = pick.lockedAtProgress ?? 1;
-    const pctMove = pctMoveAtProgress(path, finalProgress);
+    const pctMove = moves[pick.cardId] ?? 0;
     const copyIndex = copyIndexOf(cardIds, index);
     const points = pointsForPick(pctMove, pick.direction, copyIndex);
-    return { pick, card, pctMove, points };
+    return { pick, card, points };
   });
 
   const total = totalScore(rows.map((row) => row.points));
@@ -46,10 +36,10 @@ export function RoundSummary({
   return (
     <div className="text-center">
       <span className="bg-acid/15 text-acid rounded-full px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] uppercase">
-        Round {roundNumber}
+        Session over
       </span>
       <h2 className="font-display text-ink mt-3 text-3xl font-bold tracking-wide uppercase">
-        Round Ended
+        Settled at the close
       </h2>
 
       <div className="mt-8 grid grid-cols-5 gap-2 sm:gap-4">
@@ -80,22 +70,24 @@ export function RoundSummary({
         </div>
         <div>
           <p className="font-display text-ink text-5xl font-bold tabular">
-            {estimateRank(total).toLocaleString("en-US")}
+            {rank != null ? `#${rank}` : "—"}
           </p>
           <p className="text-ink-3 mt-1 font-mono text-[10px] tracking-[0.2em] uppercase">
-            Rank (simulated)
+            Rank
           </p>
         </div>
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={onPlayAgain}
-          className="bg-acid hover:bg-acid-dim rounded-full px-10 py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors"
-        >
-          Play again
-        </button>
+        {canPlayAgain && (
+          <button
+            type="button"
+            onClick={onPlayAgain}
+            className="bg-acid hover:bg-acid-dim rounded-full px-10 py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors"
+          >
+            Set tomorrow
+          </button>
+        )}
         <Link
           href="/leaderboard"
           className="border-line hover:border-acid hover:text-acid text-ink-2 rounded-full border px-8 py-3.5 text-sm font-semibold transition-colors"
