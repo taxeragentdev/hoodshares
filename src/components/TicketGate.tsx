@@ -9,20 +9,51 @@ import { TICKET_NAME } from "@/lib/ticket";
 export function TicketGate({
   title,
   children,
+  bare = false,
 }: {
   title: string;
   children: ReactNode;
+  bare?: boolean;
 }) {
   return (
-    <WalletGate title={title}>
-      <PassCheck>{children}</PassCheck>
+    <WalletGate title={title} bare={bare}>
+      <PassCheck bare={bare}>{children}</PassCheck>
     </WalletGate>
   );
 }
 
-function PassCheck({ children }: { children: ReactNode }) {
+function PassCheck({
+  children,
+  bare,
+}: {
+  children: ReactNode;
+  bare: boolean;
+}) {
   const { player } = useAuth();
   if (player?.ticketHeld) return <>{children}</>;
+
+  if (bare) {
+    return (
+      <>
+        <p className="text-acid font-mono text-[10px] tracking-[0.2em] uppercase">
+          Season 01
+        </p>
+        <h2 className="font-display text-ink mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+          You need a {TICKET_NAME}
+        </h2>
+        <p className="text-ink-2 mt-3 max-w-md text-sm leading-relaxed">
+          Mint the Season 01 pass first. That is the door. Packs and Daily
+          Lineup open after it is on this wallet.
+        </p>
+        <Link
+          href="/mint"
+          className="bg-acid hover:bg-acid-dim mt-6 block rounded-full py-3.5 text-center text-sm font-bold tracking-wide text-black uppercase transition-colors"
+        >
+          Mint {TICKET_NAME}
+        </Link>
+      </>
+    );
+  }
 
   return (
     <div className="border-line bg-surface-2 rounded-2xl border p-8 text-center">

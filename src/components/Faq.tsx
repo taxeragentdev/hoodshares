@@ -1,4 +1,5 @@
 import { PACK_PRICE_HOOD_LABEL, PACK_TOKEN_SYMBOL } from "@/lib/packs";
+import { DEMO_TICKET_PRICE_ETH } from "@/lib/ticket";
 import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 import { Section, SectionHeading } from "./ui/Section";
 
@@ -29,7 +30,7 @@ const QUESTIONS = [
   },
   {
     q: "What does it cost to play, and what do I win?",
-    a: `A HoodPass is 0.001 ETH on OpenSea and includes one pack. Extra packs are ${PACK_PRICE_HOOD_LABEL} ${PACK_TOKEN_SYMBOL} on HoodShares. Each Daily Lineup round costs ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} from Season 1. After Friday's close, the top ten split a weekly ${TOKEN_SYMBOL} pool.`,
+    a: `A HoodPass is ${DEMO_TICKET_PRICE_ETH} ETH on OpenSea and includes one pack. Extra packs are ${PACK_PRICE_HOOD_LABEL} ${PACK_TOKEN_SYMBOL} on HoodShares. Each Daily Lineup round costs ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} from Season 1. After Friday's close, the top ten split a weekly ${TOKEN_SYMBOL} pool.`,
   },
   {
     q: "Which network do I need?",

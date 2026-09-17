@@ -28,7 +28,7 @@ contract Deploy is Script {
     uint256 private constant ROBINHOOD_MAINNET_CHAIN_ID = 4663;
     uint256 private constant MINT_PRICE = 0.021 ether;
     uint96 private constant ROYALTY_FEE_BPS = 500; // 5%
-    uint256 private constant TICKET_PRICE = 0.001 ether;
+    uint256 private constant TICKET_PRICE = 0.0005 ether;
     uint256 private constant TICKET_MAX_SUPPLY = 1999;
     uint256 private constant DECK_SIZE = 30;
 

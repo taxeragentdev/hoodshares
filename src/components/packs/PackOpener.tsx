@@ -208,15 +208,22 @@ export function PackOpener({ opened, onOpen, onClear, resetLabel = "Open another
   const spread = phase === "bursting" || phase === "done";
 
   return (
-    <div className="mt-8">
+    <div className={phase === "idle" ? "" : "mt-6"}>
+      <div
+        className={
+          phase === "idle"
+            ? "grid items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(280px,1fr)] lg:gap-12"
+            : undefined
+        }
+      >
       <div
         ref={sceneRef}
         role="img"
         aria-label="HoodShares booster pack. Drag across it or tap to tear it open."
-        className={`relative mx-auto touch-none select-none transition-[max-width,min-height] duration-500 ${
+        className={`relative touch-none select-none transition-[max-width,min-height] duration-500 ${
           spread || stacked
-            ? "min-h-[300px] w-full max-w-3xl sm:min-h-[340px]"
-            : "min-h-[400px] w-full max-w-[220px] sm:min-h-[460px] sm:max-w-[248px]"
+            ? "mx-auto min-h-[300px] w-full max-w-3xl sm:min-h-[340px]"
+            : "mx-auto aspect-[1024/1536] h-[min(48svh,22rem)] w-auto sm:h-[min(56svh,28rem)] lg:mx-0 lg:ml-auto lg:h-[min(calc(100svh-14rem),30rem)]"
         }`}
         onPointerDown={showPack ? handlePointerDown : undefined}
         onPointerMove={handlePointerMove}
@@ -275,7 +282,7 @@ export function PackOpener({ opened, onOpen, onClear, resetLabel = "Open another
 
         {showPack && (
           <div
-            className={`absolute top-0 left-1/2 z-20 w-full max-w-[248px] -translate-x-1/2 ${
+            className={`absolute inset-0 z-20 ${
               phase === "idle" ? "cursor-grab active:cursor-grabbing" : ""
             }`}
             style={{
@@ -301,19 +308,20 @@ export function PackOpener({ opened, onOpen, onClear, resetLabel = "Open another
       </div>
 
       {phase === "idle" && (
-        <div className="mt-6 text-center">
-          <p className="text-ink-3 mb-4 font-mono text-[11px] tracking-wide">
+        <div className="flex min-w-0 flex-col justify-center">
+          <p className="text-ink-2 text-sm leading-relaxed">
             Drag across the pack to tear it, or tap the button.
           </p>
           <button
             type="button"
             onClick={beginOpen}
-            className="bg-acid hover:bg-acid-dim w-full rounded-full py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors"
+            className="bg-acid hover:bg-acid-dim mt-6 w-full rounded-full py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors"
           >
             Tear open
           </button>
         </div>
       )}
+      </div>
 
       {(phase === "lifting" || phase === "tearing") && (
         <p className="text-ink-3 mt-6 text-center font-mono text-[11px] tracking-wide">

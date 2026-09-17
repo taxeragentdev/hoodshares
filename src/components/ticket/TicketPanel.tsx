@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { formatEther } from "viem";
 import {
@@ -23,7 +23,8 @@ import {
   SALE_PHASE,
 } from "@/lib/contracts";
 import { OPENSEA_MINT_URL } from "@/lib/opensea";
-import { DEMO_TICKET_PRICE_ETH, TICKET_NAME } from "@/lib/ticket";
+import { PACK_PRICE_HOOD_LABEL, PACK_TOKEN_SYMBOL } from "@/lib/packs";
+import { DEMO_TICKET_PRICE_ETH, TICKET_NAME, TICKET_SEASON } from "@/lib/ticket";
 
 export function TicketPanel() {
   const { address, isConnected, chainId } = useAccount();
@@ -87,22 +88,25 @@ function DemoTicket() {
   }
 
   return (
-    <div className="border-line bg-surface-2 rounded-2xl border p-6 sm:p-8">
-      <div className="mx-auto w-full max-w-[340px]">
-        <EntryPass />
-      </div>
-      <p className="text-ink-3 mt-6 text-center font-mono text-[10px] tracking-[0.2em] uppercase">
-        {DEMO_TICKET_PRICE_ETH} ETH · one per wallet
+    <PassLayout>
+      <p className="text-acid font-mono text-[10px] tracking-[0.2em] uppercase">
+        {TICKET_SEASON}
       </p>
-      <h2 className="font-display text-ink mt-3 text-center text-xl font-bold">{TICKET_NAME}</h2>
-      <p className="text-ink-2 mx-auto mt-2 max-w-md text-center text-sm leading-relaxed">
+      <h1 className="font-display text-ink mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+        {TICKET_NAME}
+      </h1>
+      <p className="text-ink-2 mt-3 max-w-md text-sm leading-relaxed">
         One HoodPass per wallet. Extra passes on OpenSea do not add extra
-        packs. Mint it on OpenSea. That pass includes one pack you can claim
-        here now or later.
+        packs. Mint on OpenSea. That pass includes one pack you can claim here
+        now or later. Extra packs mint on this site for {PACK_PRICE_HOOD_LABEL}{" "}
+        {PACK_TOKEN_SYMBOL}.
+      </p>
+      <p className="text-ink-3 mt-5 font-mono text-[11px] tracking-[0.16em] uppercase">
+        {DEMO_TICKET_PRICE_ETH} ETH · one per wallet
       </p>
 
       {status === "boot" && (
-        <p className="text-ink-3 mt-6 text-center font-mono text-xs">Loading…</p>
+        <p className="text-ink-3 mt-6 font-mono text-xs">Loading…</p>
       )}
 
       {status === "guest" && (
@@ -110,16 +114,16 @@ function DemoTicket() {
           {openSeaMint ? (
             <>
               <OpenSeaMintLink className="bg-acid hover:bg-acid-dim block rounded-full py-3.5 text-center text-sm font-bold tracking-wide text-black uppercase transition-colors" />
-              <div className="flex justify-center">
+              <div className="[&_button]:w-full">
                 <ConnectWalletButton />
               </div>
-              <p className="text-ink-3 text-center text-xs leading-relaxed">
+              <p className="text-ink-3 text-xs leading-relaxed">
                 Mint on OpenSea, then connect this wallet to unlock the included
                 pack.
               </p>
             </>
           ) : (
-            <div className="flex justify-center">
+            <div className="flex">
               <ConnectWalletButton />
             </div>
           )}
@@ -127,7 +131,7 @@ function DemoTicket() {
       )}
 
       {status === "need-sign" && (
-        <div className="mt-6 text-center">
+        <div className="mt-6">
           <button
             type="button"
             disabled={signing}
@@ -142,7 +146,7 @@ function DemoTicket() {
 
       {signedIn && held && (
         <div className="mt-6 space-y-3">
-          <p className="border-up/30 bg-up/10 text-up rounded-lg border px-4 py-3 text-center text-xs leading-relaxed">
+          <p className="border-up/30 bg-up/10 text-up rounded-lg border px-4 py-3 text-xs leading-relaxed">
             This wallet already holds a HoodPass. One is the cap.
           </p>
           <IncludedPackCta />
@@ -156,11 +160,11 @@ function DemoTicket() {
           )}
           <Link
             href="/inventory"
-            className="text-acid block text-center text-sm font-semibold"
+            className="text-acid inline-block text-sm font-semibold"
           >
             See inventory
           </Link>
-          <OpenSeaCollectionLink className="text-acid block text-center text-sm font-semibold" />
+          <OpenSeaCollectionLink className="text-acid block text-sm font-semibold" />
         </div>
       )}
 
@@ -189,28 +193,28 @@ function DemoTicket() {
             </button>
           )}
           {!openSeaMint && (
-            <p className="text-ink-3 text-center text-xs leading-relaxed">
+            <p className="text-ink-3 text-xs leading-relaxed">
               The public drop will mint on OpenSea. Until that collection is
               live, you can mint one pass here to play.
             </p>
           )}
           {openSeaMint && (
-            <p className="text-ink-3 text-center text-xs leading-relaxed">
+            <p className="text-ink-3 text-xs leading-relaxed">
               Mint on OpenSea, then come back on this wallet. The included pack
               stays until you claim it.
             </p>
           )}
-          {syncError && <p className="text-down text-center text-xs">{syncError}</p>}
+          {syncError && <p className="text-down text-xs">{syncError}</p>}
         </div>
       )}
 
       {!held && !openSeaMint && status === "guest" && (
-        <p className="text-ink-3 mt-4 text-center text-xs leading-relaxed">
+        <p className="text-ink-3 mt-4 text-xs leading-relaxed">
           The public drop will mint on OpenSea. Until that collection is live,
           you can mint one pass here to play.
         </p>
       )}
-    </div>
+    </PassLayout>
   );
 }
 
@@ -332,11 +336,7 @@ function LiveTicket({
   }, [isMinting, isConfirming, isConnected, phase, canMintNow, alreadyMinted, totalPrice]);
 
   return (
-    <div className="border-line bg-surface-2 rounded-2xl border p-6 sm:p-8">
-      <div className="mx-auto mb-8 w-full max-w-[340px]">
-        <EntryPass />
-      </div>
-
+    <PassLayout>
       {isLoading || !phase ? (
         <div className="bg-surface-3 h-6 w-32 animate-pulse rounded-full" />
       ) : (
@@ -345,14 +345,17 @@ function LiveTicket({
         </span>
       )}
 
-      <SupplyBar totalMinted={totalMinted} maxSupply={maxSupply} />
-
-      <p className="text-ink-3 mt-6 font-mono text-[10px] tracking-[0.2em] uppercase">
+      <h1 className="font-display text-ink mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+        {TICKET_NAME}
+      </h1>
+      <p className="text-ink-3 mt-4 font-mono text-[10px] tracking-[0.2em] uppercase">
         One HoodPass per wallet
       </p>
       <p className="font-display text-ink mt-1 text-2xl font-bold tabular">
-        {priceWei !== undefined ? `${formatEther(priceWei)} ETH` : "TBD"}
+        {priceWei !== undefined ? `${formatEther(priceWei)} ETH` : `${DEMO_TICKET_PRICE_ETH} ETH`}
       </p>
+
+      <SupplyBar totalMinted={totalMinted} maxSupply={maxSupply} />
 
       {alreadyMinted && (
         <p className="border-up/30 bg-up/10 text-up mt-4 rounded-lg border px-4 py-3 text-xs leading-relaxed">
@@ -371,7 +374,7 @@ function LiveTicket({
           >
             {isConnected ? "I've minted. Unlock my pack" : "Connect to unlock your pack"}
           </button>
-          <p className="text-ink-3 mt-3 text-center text-xs leading-relaxed">
+          <p className="text-ink-3 mt-3 text-xs leading-relaxed">
             Mint on OpenSea, then come back on this wallet. The included pack
             stays until you claim it.
           </p>
@@ -392,16 +395,31 @@ function LiveTicket({
       )}
 
       <IncludedPackCta />
-      <OpenSeaCollectionLink className="text-acid mt-4 block text-center text-sm font-semibold" />
+      <OpenSeaCollectionLink className="text-acid mt-4 inline-block text-sm font-semibold" />
 
       {syncError && (
-        <p className="text-down mt-3 text-center text-xs">{syncError}</p>
+        <p className="text-down mt-3 text-xs">{syncError}</p>
       )}
       {writeError && (
         <p className="border-down/30 bg-down/10 text-down mt-4 rounded-lg border px-4 py-3 text-xs leading-relaxed">
           {writeError.message.split("\n")[0]}
         </p>
       )}
+    </PassLayout>
+  );
+}
+
+function PassLayout({ children }: { children: ReactNode }) {
+  return (
+    <div className="border-line bg-surface overflow-hidden rounded-3xl border">
+      <div className="grid items-center gap-6 p-5 sm:gap-8 sm:p-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(280px,1fr)] lg:gap-12 lg:p-10">
+        <div className="flex justify-center lg:justify-end">
+          <div className="aspect-[1031/1525] h-[min(48svh,22rem)] sm:h-[min(56svh,28rem)] lg:h-[min(calc(100svh-11rem),34rem)]">
+            <EntryPass />
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-col justify-center lg:py-2">{children}</div>
+      </div>
     </div>
   );
 }

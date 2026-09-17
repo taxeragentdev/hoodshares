@@ -39,7 +39,7 @@ export function EntryPass({
   return (
     <div
       ref={root}
-      className={`relative ${className}`}
+      className={`relative h-full w-full ${className}`}
       onPointerMove={handleMove}
       onPointerLeave={handleLeave}
       style={{
@@ -49,20 +49,20 @@ export function EntryPass({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute top-[8%] left-1/2 h-[78%] w-[70%] -translate-x-1/2 rounded-[36px] blur-3xl"
+        className="pointer-events-none absolute top-[10%] left-1/2 h-[72%] w-[62%] -translate-x-1/2 rounded-[36px] blur-2xl"
         style={{
-          background: "radial-gradient(circle, rgba(204,255,0,0.28) 0%, transparent 72%)",
+          background: "radial-gradient(circle, rgba(204,255,0,0.22) 0%, transparent 72%)",
         }}
       />
 
-      <article className="relative aspect-[1031/1525] w-full">
+      <article className="relative h-full w-full">
         <Image
           src={PASS_SRC}
           alt="HoodPass"
           width={PASS_W}
           height={PASS_H}
-          sizes="(max-width: 640px) 88vw, 420px"
-          className="h-full w-full object-contain drop-shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+          sizes="(max-width: 1024px) 48vw, 320px"
+          className="h-full w-full object-contain drop-shadow-[0_18px_48px_rgba(0,0,0,0.5)]"
           priority={priority}
         />
         <div

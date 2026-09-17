@@ -1,4 +1,4 @@
-export const DEMO_TICKET_PRICE_ETH = "0.001";
+export const DEMO_TICKET_PRICE_ETH = "0.0005";
 export const TICKET_NAME = "HoodPass";
 export const TICKET_SEASON = "Season 01";
 

@@ -54,7 +54,7 @@ export function HoodPack({
 
   return (
     <div
-      className={`relative ${className}`}
+      className={`relative h-full w-full ${className}`}
       style={{
         transform: `perspective(1400px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(${-lift * 22}px) scale(${1 + lift * 0.08})`,
         transformStyle: "preserve-3d",
@@ -70,7 +70,7 @@ export function HoodPack({
         }}
       />
 
-      <div className="relative aspect-[1024/1536] w-full" style={{ transformStyle: "preserve-3d" }}>
+      <div className="relative h-full w-full" style={{ transformStyle: "preserve-3d" }}>
         {peeling && (
           <div
             aria-hidden
