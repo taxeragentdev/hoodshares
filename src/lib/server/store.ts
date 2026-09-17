@@ -4,6 +4,7 @@ import { getAddress } from "viem";
 import type { PlayerRecord } from "@/lib/player";
 import { formatTicketSerial, parseTicketSerial } from "@/lib/ticket";
 import { creditPacks } from "@/lib/inventory";
+import { hasPostgres } from "./databaseUrl";
 
 function dataDir(): string {
   if (process.env.HOODSHARES_DATA_DIR) return process.env.HOODSHARES_DATA_DIR;
