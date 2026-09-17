@@ -54,7 +54,7 @@ export function HoodPack({
 
   return (
     <div
-      className={`relative h-full w-full ${className}`}
+      className={`relative w-full ${className}`}
       style={{
         transform: `perspective(1400px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(${-lift * 22}px) scale(${1 + lift * 0.08})`,
         transformStyle: "preserve-3d",
@@ -62,7 +62,7 @@ export function HoodPack({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute top-[12%] left-1/2 h-[70%] w-[62%] -translate-x-1/2 rounded-[28px] blur-2xl"
+        className="pointer-events-none absolute top-[12%] left-1/2 z-0 h-[70%] w-[62%] -translate-x-1/2 rounded-[28px] blur-2xl"
         style={{
           background:
             "radial-gradient(circle, rgba(204,255,0,0.3) 0%, transparent 70%)",
@@ -70,7 +70,29 @@ export function HoodPack({
         }}
       />
 
-      <div className="relative h-full w-full" style={{ transformStyle: "preserve-3d" }}>
+      <div className="relative w-full" style={{ transformStyle: "preserve-3d" }}>
+        <Image
+          src={PACK_SRC}
+          alt={peeling ? "" : "HoodShares booster pack"}
+          width={PACK_W}
+          height={PACK_H}
+          priority
+          unoptimized
+          className={`relative z-0 block h-auto w-full drop-shadow-[0_24px_40px_rgba(0,0,0,0.55)] ${
+            peeling ? "invisible" : ""
+          }`}
+        />
+
+        {!peeling && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-[6%] mix-blend-screen"
+            style={{
+              background: `radial-gradient(circle at ${shineX}% ${shineY}%, rgba(255,255,255,0.22) 0%, rgba(204,255,0,0.08) 22%, transparent 46%)`,
+            }}
+          />
+        )}
+
         {peeling && (
           <div
             aria-hidden
@@ -85,14 +107,14 @@ export function HoodPack({
           />
         )}
 
-        <div
-          className="absolute inset-0 origin-top will-change-transform"
-          style={{
-            clipPath: peeling ? bodyClip(tearProgress) : undefined,
-          }}
-        >
-          <PackFace shineX={shineX} shineY={shineY} />
-        </div>
+        {peeling && (
+          <div
+            className="absolute inset-0 origin-top will-change-transform"
+            style={{ clipPath: bodyClip(tearProgress) }}
+          >
+            <PackFace shineX={shineX} shineY={shineY} />
+          </div>
+        )}
 
         {peeling && (
           <div

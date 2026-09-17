@@ -406,11 +406,7 @@ function DemoPack() {
 }
 
 function PackVisual({ children }: { children: ReactNode }) {
-  return (
-    <div className="aspect-[1024/1536] w-[min(100%,18rem)] sm:w-[20rem] lg:w-[22rem]">
-      {children}
-    </div>
-  );
+  return <div className="w-full max-w-[18rem] sm:max-w-[20rem] lg:max-w-[22rem]">{children}</div>;
 }
 
 function PackLayout({
@@ -422,9 +418,11 @@ function PackLayout({
 }) {
   return (
     <div className="border-line bg-surface overflow-visible rounded-3xl border">
-      <div className="grid items-center gap-6 p-5 sm:gap-8 sm:p-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-12 lg:p-10">
-        <div className="flex justify-center lg:justify-end">{visual}</div>
-        <div className="flex min-w-0 flex-col justify-center lg:py-2">{children}</div>
+      <div className="flex flex-col items-center gap-6 p-5 sm:gap-8 sm:p-8 lg:flex-row lg:items-center lg:gap-12 lg:p-10">
+        <div className="flex w-full justify-center lg:w-[22rem] lg:shrink-0 lg:justify-end">
+          {visual}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-center lg:py-2">{children}</div>
       </div>
     </div>
   );

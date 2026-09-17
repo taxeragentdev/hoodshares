@@ -221,7 +221,7 @@ export function PackOpener({
       <div
         className={
           idle
-            ? "grid items-center gap-6 sm:gap-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-12"
+            ? "flex flex-col items-center gap-6 sm:gap-8 lg:flex-row lg:items-center lg:gap-12"
             : undefined
         }
       >
@@ -232,7 +232,7 @@ export function PackOpener({
           className={`relative touch-none select-none ${
             spread || stacked
               ? "mx-auto min-h-[300px] w-full max-w-3xl sm:min-h-[340px]"
-              : "mx-auto aspect-[1024/1536] w-[min(100%,18rem)] shrink-0 sm:w-[20rem] lg:mx-0 lg:ml-auto"
+              : "mx-auto w-full max-w-[20rem] shrink-0 sm:max-w-none sm:w-80 lg:mx-0 lg:ml-auto lg:w-[22rem]"
           }`}
           onPointerDown={showPack ? handlePointerDown : undefined}
           onPointerMove={handlePointerMove}
@@ -293,7 +293,7 @@ export function PackOpener({
           <div
             className={
               idle
-                ? "h-full w-full cursor-grab active:cursor-grabbing"
+                ? "relative w-full cursor-grab active:cursor-grabbing"
                 : "absolute top-0 left-1/2 z-20 w-full max-w-[248px] -translate-x-1/2"
             }
             style={{
@@ -319,7 +319,7 @@ export function PackOpener({
       </div>
 
       {idle && (
-        <div className="flex min-w-0 flex-col justify-center">
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
           {idleIntro}
           <p className="text-ink-2 mt-4 text-sm leading-relaxed">
             Drag across the pack to tear it, or tap the button.
