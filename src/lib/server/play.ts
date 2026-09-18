@@ -69,6 +69,7 @@ export function syncPlayState(
   player: PlayerRecord,
   book?: SessionQuoteBook | null,
 ): void {
+  reopenPrematureSettle(player);
   expireActivePlay(player, book);
   migrateBuildingPlay(player);
   promoteNextPlay(player);
@@ -84,6 +85,20 @@ export function syncPlayState(
   ) {
     player.nextPlay = { ...player.nextPlay, roundId: nextSessionId() };
   }
+}
+
+/**
+ * The play page used to boot with market = closed, then POST /api/play/settle
+ * on first paint. That closed a live NYSE session. If today's play was
+ * settled while the cash tape is still open, put it back.
+ */
+function reopenPrematureSettle(player: PlayerRecord): void {
+  const play = player.play;
+  if (!play || play.phase !== "settled") return;
+  if (play.roundId !== sessionId()) return;
+  if (sessionPhase() !== "open") return;
+  play.phase = "active";
+  player.results = player.results.filter((row) => row.roundId !== play.roundId);
 }
 
 function migrateBuildingPlay(player: PlayerRecord): void {

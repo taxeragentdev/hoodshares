@@ -51,9 +51,9 @@ function pctFromBook(
 export default function PlayPage() {
   const { inventory, player, signedIn, savePlay, settlePlay } = useAuth();
   const [lineup, setLineup] = useState<LineupPick[]>([]);
-  const [progress, setProgress] = useState(0);
-  const [market, setMarket] = useState<SessionPhase>("closed");
-  const [clockLabel, setClockLabel] = useState<string | null>(null);
+  const [progress, setProgress] = useState(() => sessionProgress());
+  const [market, setMarket] = useState<SessionPhase>(() => sessionPhase());
+  const [clockLabel, setClockLabel] = useState<string | null>(() => sessionPhaseLabel());
   const [hydrated, setHydrated] = useState(false);
   const [live, setLive] = useState<Record<string, number>>({});
   const [openPx, setOpenPx] = useState<Record<string, number>>({});
@@ -71,8 +71,11 @@ export default function PlayPage() {
     player?.play && player.play.roundId === today && player.play.lineup.length >= LINEUP_SIZE
       ? player.play
       : null;
-  const activeLive = Boolean(activePlay && market === "open" && activePlay.phase !== "settled");
-  const activeSettled = Boolean(activePlay && (activePlay.phase === "settled" || market !== "open"));
+  const sessionOver = market === "closed" || market === "weekend";
+  const activeLive = Boolean(activePlay && activePlay.phase !== "settled" && market === "open");
+  const activeSettled = Boolean(
+    activePlay && (activePlay.phase === "settled" || (sessionOver && activePlay.phase !== "building")),
+  );
   const activeNumber = player?.play?.roundNumber ?? 1;
   const nextNumber = player?.nextPlay?.roundNumber ?? activeNumber + 1;
 
@@ -164,9 +167,9 @@ export default function PlayPage() {
   }, [activeSettled, player?.address]);
 
   useEffect(() => {
-    if (!activeSettled || !signedIn) return;
+    if (!signedIn || !sessionOver) return;
     void settlePlay().catch(() => undefined);
-  }, [activeSettled, signedIn, settlePlay]);
+  }, [sessionOver, signedIn, settlePlay]);
 
   const savedLineup = player?.nextPlay?.lineup ?? [];
   const lineupDirty = JSON.stringify(lineup) !== JSON.stringify(savedLineup);
