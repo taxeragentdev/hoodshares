@@ -1,4 +1,5 @@
 import { robinhoodChain, robinhoodChainTestnet } from "./chains";
+import { TOKEN_ADDRESS } from "./token";
 
 /**
  * Minimal ABI — only the reads and writes the mint page actually uses, hand
@@ -297,14 +298,13 @@ export const HOODPASS_CONTRACT: Partial<Record<number, `0x${string}`>> = {
 
 /**
  * The project's own ERC-20, launched externally via Pons (a Robinhood Chain
- * launchpad) rather than deployed by this repo — so, like the collection and
- * ticket addresses, this starts unset and only gets filled in once that
- * launch has actually happened. Packs will be priced and paid in this token;
- * see the roadmap in `README.md` for what's still unbuilt around it.
+ * launchpad) rather than deployed by this repo. Packs and round entry are
+ * paid in this token once the pack shop is pointed at it.
  */
 export const PACK_TOKEN_ADDRESS: Partial<Record<number, `0x${string}`>> = {
   [robinhoodChain.id]:
-    (process.env.NEXT_PUBLIC_PACK_TOKEN_ADDRESS_MAINNET as `0x${string}` | undefined) ?? undefined,
+    (process.env.NEXT_PUBLIC_PACK_TOKEN_ADDRESS_MAINNET as `0x${string}` | undefined) ??
+    TOKEN_ADDRESS,
   [robinhoodChainTestnet.id]:
     (process.env.NEXT_PUBLIC_PACK_TOKEN_ADDRESS_TESTNET as `0x${string}` | undefined) ?? undefined,
 };

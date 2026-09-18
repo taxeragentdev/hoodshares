@@ -1,5 +1,6 @@
 import { Logo } from "./Logo";
 import { XMark, X_URL } from "./XLink";
+import { TOKEN_ADDRESS, TOKEN_SYMBOL, tokenExplorerUrl } from "@/lib/token";
 
 const COLUMNS = [
   {
@@ -59,11 +60,24 @@ export function Footer() {
                 </span>
               </span>
             </a>
-            <div className="border-line bg-surface-2 mt-4 inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2">
-              <span className="bg-up h-1.5 w-1.5 animate-pulse rounded-full" />
-              <span className="text-ink-2 font-mono text-[11px] tracking-wider">
-                Chain ID 4663, gas in ETH
-              </span>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="border-line bg-surface-2 inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2">
+                <span className="bg-up h-1.5 w-1.5 animate-pulse rounded-full" />
+                <span className="text-ink-2 font-mono text-[11px] tracking-wider">
+                  Chain ID 4663, gas in ETH
+                </span>
+              </div>
+              <a
+                href={tokenExplorerUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-line hover:border-acid hover:text-acid text-ink-2 inline-flex items-center gap-2 rounded-full border px-3.5 py-2 font-mono text-[11px] tracking-wider transition-colors"
+              >
+                {TOKEN_SYMBOL}
+                <span className="text-ink-3">
+                  {TOKEN_ADDRESS.slice(0, 6)}…{TOKEN_ADDRESS.slice(-4)}
+                </span>
+              </a>
             </div>
           </div>
 
