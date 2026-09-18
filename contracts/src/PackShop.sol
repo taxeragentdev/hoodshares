@@ -7,7 +7,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SealedPack} from "./SealedPack.sol";
 
-/// @notice Sells sealed packs paid in HOOD via `buyPacks`. ETH mint is
+/// @notice Sells sealed packs paid in SOOD via `buyPacks`. ETH mint is
 /// optional (`buyPacksWithEth`) and off by default.
 ///
 /// The payment token is launched outside this repo (a Pons drop on

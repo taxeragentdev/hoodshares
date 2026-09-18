@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/Providers";
+import { TOKEN_SYMBOL } from "@/lib/token";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -24,7 +25,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "HoodShares | Collect the Market",
   description:
-    "Stock cards on Robinhood Chain. Open a pack, play the daily lineup, win $HS.",
+    `Stock cards on Robinhood Chain. Open a pack, play the daily lineup, win ${TOKEN_SYMBOL}.`,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

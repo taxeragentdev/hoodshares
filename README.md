@@ -2,7 +2,7 @@
 
 A collectible card protocol built on **Robinhood Chain**. The loop is one sentence:
 
-**Buy HOOD → buy a sealed pack NFT → open it → play a five-card Daily Lineup against real Robinhood Chain stock prices.**
+**Buy SOOD → buy a sealed pack NFT → open it → play a five-card Daily Lineup against real Robinhood Chain stock prices.**
 
 No crypto tickers. Every card tracks an official Robinhood Stock Token from the same book Uniswap lists under Robinhood → Stocks (see `src/lib/cards.ts`). Packs cost the project's own token, five cards each — one pack is a playable hand. The sealed pack is an ERC-1155. Opening burns it and credits five tickers to off-chain game inventory.
 
@@ -124,7 +124,7 @@ directly and the payout list is publicly verifiable.
 
 `/packs` is how packs are sold. With no pack shop deployed it mints a **demo sealed
 pack** in the browser, then opening burns it and credits five cards to local
-inventory. Once `PackShop` and the HOOD token exist, the same page reads
+inventory. Once `PackShop` and the SOOD token exist, the same page reads
 `packPrice` / `saleOpen` / `paymentToken`, asks for an ERC-20 approve, and writes
 `buyPacks`. Opening live is `SealedPack.open`.
 
@@ -161,7 +161,7 @@ moves to Public, allowlist wallets included.
 
 `mintPublic`/`mintAllowlist` are a closed ETH fallback. They exist on the collection
 contract if cards ever need to sell for ETH; they are **not** the intended path. Packs
-paid in HOOD are.
+paid in SOOD are.
 
 ## Getting started
 
@@ -262,7 +262,7 @@ what is deliberately still missing before a mainnet deploy.
    _(done — external audit and a real VRF adapter still required before mainnet)_
 3. **Game engine** — lineup builder and scoring are live client-side against simulated
    prices _(demo done — real price feed, persistence, and a live leaderboard still needed)_
-4. **HOOD token + pack shop live** — token launches externally (Pons); pack shop is
+4. **SOOD token + pack shop live** — token launches externally (Pons); pack shop is
    pointed at it and `/packs` writes `buyPacks` _(blocked on the token launch)_
 5. **Contests live** — Daily Lineup first, then Duels, once `PackOpened` is indexed
    into a real inventory instead of this browser's localStorage

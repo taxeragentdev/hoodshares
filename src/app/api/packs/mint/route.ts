@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { sessionAddress } from "@/lib/server/auth";
 import { snapshot, syncPlayState } from "@/lib/server/play";
 import { sessionQuotes } from "@/lib/server/prices";
+import { PACK_PRICE_HOOD_LABEL } from "@/lib/packs";
+import { TOKEN_SYMBOL } from "@/lib/token";
 import { claimIncludedPack, ensurePlayer, withStore } from "@/lib/server/store";
 
 export async function POST(request: Request) {
@@ -12,7 +14,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { grant?: boolean };
   if (body.grant !== true) {
     return NextResponse.json(
-      { error: "Extra packs mint on HoodShares for 50,000 $HS. This wallet already used its included pack, or needs a HoodPass." },
+      { error: `Extra packs mint on HoodShares for ${PACK_PRICE_HOOD_LABEL} ${TOKEN_SYMBOL}. This wallet already used its included pack, or needs a HoodPass.` },
       { status: 403 },
     );
   }

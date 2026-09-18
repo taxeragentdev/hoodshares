@@ -1,12 +1,12 @@
 import { PACK_TOKEN_SYMBOL } from "@/lib/packs";
 import type { Direction } from "./types";
 
-/** Share of the weekly $HS prize pool, top 10 only. Rank 11+ is rank only. */
+/** Share of the weekly SOOD prize pool, top 10 only. Rank 11+ is rank only. */
 export const LEADERBOARD_PAYOUT_BPS = [
   4000, 2000, 1200, 800, 500, 400, 400, 300, 200, 200,
 ] as const;
 
-/** $HS paid this week. Stays 0 until the prize pool is funded. */
+/** SOOD paid this week. Stays 0 until the prize pool is funded. */
 export const WEEKLY_PRIZE_POOL = 0;
 export const SESSION_PRIZE_POOL = WEEKLY_PRIZE_POOL;
 export const PAID_RANKS = LEADERBOARD_PAYOUT_BPS.length;

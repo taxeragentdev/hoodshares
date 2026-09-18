@@ -93,10 +93,10 @@ contract Deploy is Script {
         console.log("treasury.setRewardDistributor(distributor)");
         console.log("packs.setShop(shop)");
         console.log("shop.setSaleOpen(true)");
-        console.log("shop.setPackPrice(50000 ether)                        # 50,000 HOOD at 18 decimals");
+        console.log("shop.setPackPrice(50000 ether)                        # 50,000 SOOD at 18 decimals");
         console.log("ticket.setSalePhase(EntryTicket.SalePhase.Public)      # or .Allowlist first");
         console.log("--- Still pending ---");
-        console.log("PACK_TOKEN + PACK_PRICE=50000e18 if HOOD already exists");
+        console.log("PACK_TOKEN + PACK_PRICE=50000e18 if SOOD already exists");
         console.log("Treasury.executeBuyback(router, swapData, ethAmount)  # once the token + pool exist");
     }
 }

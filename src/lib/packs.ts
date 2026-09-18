@@ -6,7 +6,7 @@ export const CARDS_PER_PACK = 5;
 
 export const PACK_TOKEN_SYMBOL = TOKEN_SYMBOL;
 
-/** Extra packs on HoodShares, paid in $HS. HoodPass stays 0.0005 ETH on OpenSea. */
+/** Extra packs on HoodShares, paid in SOOD. HoodPass stays 0.0005 ETH on OpenSea. */
 export const PACK_PRICE_HOOD = 50_000;
 export const PACK_PRICE_HOOD_LABEL = "50,000";
 

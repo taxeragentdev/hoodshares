@@ -18,7 +18,7 @@ EVM-compatible so nothing here is chain-specific beyond the RPC endpoints in
 
 ## Design decisions worth knowing before you touch this code
 
-- **Sealed packs are the on-chain product.** Buy with HOOD, hold, trade, burn to
+- **Sealed packs are the on-chain product.** Buy with SOOD, hold, trade, burn to
   open. Unopened packs are identical, so they are ERC-1155, not 721.
 - **Opened cards stay off-chain.** `PackOpened` is the verifiable receipt
   (player, request id, five ticker indices). The game inventory indexes that
