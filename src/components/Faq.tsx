@@ -37,6 +37,10 @@ const QUESTIONS = [
     a: "Robinhood Chain, chain ID 4663. Gas is ETH. Any Ethereum wallet works once you add the network.",
   },
   {
+    q: `Where do I buy ${TOKEN_SYMBOL}?`,
+    a: `${TOKEN_SYMBOL} trades on the Pons launchpad. Use BUY $SOOD on this site. Extra packs and Daily Lineup entry pull ${TOKEN_SYMBOL} from your wallet and send it to the treasury.`,
+  },
+  {
     q: "Where do trade fees go?",
     a: `Half of every ${TOKEN_SYMBOL} trade fee goes to the prize pool. Round entry fees go there in full. ETH from the HoodPass mint splits 60 percent prize, 30 percent buyback and burn, 5 percent development, 5 percent growth.`,
   },

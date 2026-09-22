@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { BuySoodButton } from "@/components/BuySoodButton";
 import { TicketGate } from "@/components/TicketGate";
 import { useAuth } from "@/components/AuthProvider";
+import { useSoodPay } from "@/components/useSoodPay";
 import { LineupBuilder } from "@/components/game/LineupBuilder";
 import { ActiveRound } from "@/components/game/ActiveRound";
 import { RoundSummary } from "@/components/game/RoundSummary";
@@ -21,7 +23,7 @@ import {
 } from "@/lib/game/session";
 import { formatSessionLabel, nextSessionId, sessionId } from "@/lib/game/sessionId";
 import { LINEUP_SIZE, type LineupPick } from "@/lib/game/types";
-import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
+import { ROUND_ENTRY_LABEL, ROUND_ENTRY_WEI, TOKEN_SYMBOL } from "@/lib/token";
 
 function formatTimeLeft(msLeft: number): string {
   const totalSeconds = Math.max(0, Math.ceil(msLeft / 1000));
@@ -50,6 +52,8 @@ function pctFromBook(
 
 export default function PlayPage() {
   const { inventory, player, signedIn, savePlay, settlePlay } = useAuth();
+  const { pay, busy: paying } = useSoodPay();
+  const [pendingPayTx, setPendingPayTx] = useState<`0x${string}` | null>(null);
   const [lineup, setLineup] = useState<LineupPick[]>([]);
   const [progress, setProgress] = useState(() => sessionProgress());
   const [market, setMarket] = useState<SessionPhase>(() => sessionPhase());
@@ -212,7 +216,14 @@ export default function PlayPage() {
       slotCounter: slotCounter.current,
     };
     try {
-      const next = await savePlay(nextPlay, { intent: "save" });
+      const alreadyPaid = Boolean(player?.paidRounds?.[upcoming]);
+      let paymentTx = pendingPayTx ?? undefined;
+      if (!alreadyPaid && !paymentTx) {
+        paymentTx = await pay(ROUND_ENTRY_WEI);
+        setPendingPayTx(paymentTx);
+      }
+      const next = await savePlay(nextPlay, { intent: "save", paymentTx });
+      setPendingPayTx(null);
       if (next.nextPlay) setLineup(next.nextPlay.lineup);
     } catch (err) {
       setSignError(err instanceof Error ? err.message : "Could not save this lineup");
@@ -259,6 +270,7 @@ export default function PlayPage() {
   }
 
   const displayNextNumber = player?.nextPlay?.roundNumber ?? nextNumber;
+  const nextUnpaid = !player?.paidRounds?.[upcoming];
 
   return (
     <>
@@ -335,6 +347,15 @@ export default function PlayPage() {
               </RoundSection>
 
               <RoundSection label="Next round" number={displayNextNumber}>
+                {nextUnpaid && (
+                  <div className="border-acid/30 bg-acid/8 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3">
+                    <p className="text-ink-2 max-w-md text-xs leading-relaxed">
+                      First save for this round sends {ROUND_ENTRY_LABEL}{" "}
+                      {TOKEN_SYMBOL} to the treasury. Edits after that are free.
+                    </p>
+                    <BuySoodButton />
+                  </div>
+                )}
                 <LineupBuilder
                   bare
                   lineup={lineup}
@@ -346,13 +367,15 @@ export default function PlayPage() {
                   startLabel={
                     alreadySaved && !lineupDirty
                       ? "Lineup saved"
-                      : lineupDirty && alreadySaved
-                        ? "Save changes"
-                        : "Save picks"
+                      : nextUnpaid
+                        ? `Pay ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} and save`
+                        : lineupDirty && alreadySaved
+                          ? "Save changes"
+                          : "Save picks"
                   }
                   startEnabled={lineupDirty || !alreadySaved}
-                  startBusy={saving}
-                  hint={`Plays ${formatSessionLabel(upcoming)} from 09:30 ET. Each round is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL}. Your wallet signs this lineup.`}
+                  startBusy={saving || paying}
+                  hint={`Plays ${formatSessionLabel(upcoming)} from 09:30 ET. Each unpaid round is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} from your wallet. Then you sign the lineup.`}
                 />
               </RoundSection>
             </div>

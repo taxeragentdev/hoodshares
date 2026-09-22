@@ -10,6 +10,7 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
+import { BuySoodButton } from "@/components/BuySoodButton";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { EntryPass } from "@/components/ticket/EntryPass";
 import { IncludedPackCta } from "@/components/ticket/IncludedPackCta";
@@ -104,6 +105,9 @@ function DemoTicket() {
       <p className="text-ink-3 mt-5 font-mono text-[11px] tracking-[0.16em] uppercase">
         {DEMO_TICKET_PRICE_ETH} ETH · one per wallet
       </p>
+      <div className="mt-4">
+        <BuySoodButton />
+      </div>
 
       {status === "boot" && (
         <p className="text-ink-3 mt-6 font-mono text-xs">Loading…</p>

@@ -34,6 +34,8 @@ export interface StoreFile {
   ticketIssued: number;
   /** Pack shop buy txs already credited to off-chain inventory. */
   creditedPackTxs: Record<string, true>;
+  /** SOOD entry txs already applied to a Daily Lineup round. */
+  creditedEntryTxs: Record<string, { address: string; sessionId: string }>;
 }
 
 const emptyStore = (): StoreFile => ({
@@ -42,6 +44,7 @@ const emptyStore = (): StoreFile => ({
   quotes: {},
   ticketIssued: 0,
   creditedPackTxs: {},
+  creditedEntryTxs: {},
 });
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -56,6 +59,7 @@ async function readFileStore(): Promise<StoreFile> {
     quotes: parsed.quotes ?? {},
     ticketIssued: parsed.ticketIssued ?? 0,
     creditedPackTxs: parsed.creditedPackTxs ?? {},
+    creditedEntryTxs: parsed.creditedEntryTxs ?? {},
     };
   } catch {
     return emptyStore();
@@ -119,6 +123,7 @@ export function emptyPlayer(address: `0x${string}`): PlayerRecord {
     play: null,
     nextPlay: null,
     results: [],
+    paidRounds: {},
   };
 }
 
@@ -132,6 +137,7 @@ export function ensurePlayer(store: StoreFile, address: `0x${string}`): PlayerRe
     existing.freePackAvailable = Boolean(existing.freePackAvailable);
     existing.includedPackClaimed = Boolean(existing.includedPackClaimed);
     existing.nextPlay = existing.nextPlay ?? null;
+    existing.paidRounds = existing.paidRounds ?? {};
     return existing;
   }
   const created = emptyPlayer(address);
@@ -191,5 +197,28 @@ export function creditPaidPacks(
   if (quantity < 1) return false;
   store.creditedPackTxs[key] = true;
   record.inventory = creditPacks(record.inventory, quantity);
+  return true;
+}
+
+export function creditRoundEntry(
+  store: StoreFile,
+  record: PlayerRecord,
+  txHash: string,
+  sessionId: string,
+): boolean {
+  const key = txHash.toLowerCase();
+  const existing = store.creditedEntryTxs[key];
+  if (existing) {
+    const ok =
+      existing.address === record.address.toLowerCase() &&
+      existing.sessionId === sessionId;
+    if (ok) record.paidRounds = { ...record.paidRounds, [sessionId]: key };
+    return ok;
+  }
+  store.creditedEntryTxs[key] = {
+    address: record.address.toLowerCase(),
+    sessionId,
+  };
+  record.paidRounds = { ...record.paidRounds, [sessionId]: key };
   return true;
 }

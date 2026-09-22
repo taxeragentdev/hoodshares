@@ -1,5 +1,6 @@
+import { parseUnits } from "viem";
 import { CARDS, type CardDefinition } from "./cards";
-import { TOKEN_SYMBOL } from "./token";
+import { TOKEN_DECIMALS, TOKEN_SYMBOL } from "./token";
 
 /** One pack is one playable Daily Lineup. Extra packs are inventory. */
 export const CARDS_PER_PACK = 5;
@@ -9,6 +10,7 @@ export const PACK_TOKEN_SYMBOL = TOKEN_SYMBOL;
 /** Extra packs on HoodShares, paid in SOOD. HoodPass stays 0.0005 ETH on OpenSea. */
 export const PACK_PRICE_HOOD = 50_000;
 export const PACK_PRICE_HOOD_LABEL = "50,000";
+export const PACK_PRICE_WEI = parseUnits(String(PACK_PRICE_HOOD), TOKEN_DECIMALS);
 
 export interface OpenedCard {
   card: CardDefinition;

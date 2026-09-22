@@ -17,6 +17,7 @@ export function snapshot(player: PlayerRecord): PlayerSnapshot {
     play: player.play,
     nextPlay: player.nextPlay ?? null,
     lastResult: player.results.at(-1) ?? null,
+    paidRounds: player.paidRounds ?? {},
   };
 }
 

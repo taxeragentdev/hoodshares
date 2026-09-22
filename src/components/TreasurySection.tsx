@@ -1,5 +1,6 @@
 import { PACK_PRICE_HOOD_LABEL, PACK_TOKEN_SYMBOL } from "@/lib/packs";
 import { ROUND_ENTRY_LABEL, TOKEN_ADDRESS, TOKEN_SYMBOL, tokenExplorerUrl } from "@/lib/token";
+import { BuySoodButton } from "./BuySoodButton";
 import { Section, SectionHeading } from "./ui/Section";
 
 const ALLOCATION = [
@@ -69,15 +70,18 @@ export function TreasurySection() {
           prize pool. That cut sits on top of the mint split below. It is not
           withdrawn as revenue.
         </p>
-        <a
-          href={tokenExplorerUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-ink-3 hover:text-acid mt-4 inline-block font-mono text-xs tracking-wide transition-colors"
-        >
-          {TOKEN_SYMBOL} on Robinhood Chain {TOKEN_ADDRESS.slice(0, 6)}…
-          {TOKEN_ADDRESS.slice(-4)}
-        </a>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <BuySoodButton />
+          <a
+            href={tokenExplorerUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ink-3 hover:text-acid font-mono text-xs tracking-wide transition-colors"
+          >
+            {TOKEN_SYMBOL} on Robinhood Chain {TOKEN_ADDRESS.slice(0, 6)}…
+            {TOKEN_ADDRESS.slice(-4)}
+          </a>
+        </div>
       </div>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_1fr]">

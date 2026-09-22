@@ -11,8 +11,10 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
+import { BuySoodButton } from "@/components/BuySoodButton";
 import { TicketGate } from "@/components/TicketGate";
 import { IncludedPackCta } from "@/components/ticket/IncludedPackCta";
+import { useSoodPay } from "@/components/useSoodPay";
 import { activeChain } from "@/lib/chains";
 import { CARDS } from "@/lib/cards";
 import { copiesOf, totalCards } from "@/lib/inventory";
@@ -29,9 +31,11 @@ import {
 import {
   CARDS_PER_PACK,
   PACK_PRICE_HOOD_LABEL,
+  PACK_PRICE_WEI,
   PACK_TOKEN_SYMBOL,
   type OpenedCard,
 } from "@/lib/packs";
+import { TOKEN_DECIMALS, TOKEN_SYMBOL } from "@/lib/token";
 
 export function PackPanel() {
   const { address, isConnected, chainId } = useAccount();
@@ -267,9 +271,11 @@ export function PackPanel() {
 }
 
 function DemoPack() {
-  const { inventory, mintPack, openPack, player } = useAuth();
+  const { inventory, mintPack, openPack, player, creditPaidPack } = useAuth();
+  const { pay, balance, busy: paying } = useSoodPay();
   const [opened, setOpened] = useState<OpenedCard[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
   const grantOpen = Boolean(player?.freePackAvailable);
 
   async function handleOpen() {
@@ -281,8 +287,16 @@ function DemoPack() {
 
   async function handleMint() {
     setBusy(true);
+    setPayError(null);
     try {
-      await mintPack({ grant: grantOpen });
+      if (grantOpen) {
+        await mintPack({ grant: true });
+        return;
+      }
+      const txHash = await pay(PACK_PRICE_WEI);
+      await creditPaidPack(txHash);
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : `Could not pay ${TOKEN_SYMBOL}`);
     } finally {
       setBusy(false);
     }
@@ -342,24 +356,40 @@ function DemoPack() {
 
             <button
               type="button"
-              disabled={busy || !grantOpen}
+              disabled={busy || paying}
               onClick={() => void handleMint()}
               className="bg-acid hover:bg-acid-dim mt-6 w-full rounded-full py-3.5 text-sm font-bold tracking-wide text-black uppercase transition-colors disabled:opacity-60"
             >
-              {busy
-                ? "Getting a pack…"
+              {busy || paying
+                ? grantOpen
+                  ? "Getting a pack…"
+                  : `Paying ${PACK_PRICE_HOOD_LABEL} ${PACK_TOKEN_SYMBOL}…`
                 : grantOpen
                   ? "Claim included pack"
-                  : "Extra packs mint here"}
+                  : `Buy pack for ${PACK_PRICE_HOOD_LABEL} ${PACK_TOKEN_SYMBOL}`}
             </button>
             {grantOpen ? (
               <p className="text-ink-3 mt-3 text-xs leading-relaxed">
                 Included with your HoodPass. One pack per wallet.
               </p>
             ) : (
-              <p className="text-ink-3 mt-3 text-xs leading-relaxed">
-                Extra packs are {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL} on
-                this site once {PACK_TOKEN_SYMBOL} and the pack shop are live.
+              <div className="mt-3 space-y-3">
+                <p className="text-ink-3 text-xs leading-relaxed">
+                  Extra packs are {PACK_PRICE_HOOD_LABEL} {PACK_TOKEN_SYMBOL}.
+                  Your wallet sends that amount to the treasury, then the pack
+                  lands here.
+                </p>
+                {balance !== undefined && (
+                  <p className="text-ink-3 font-mono text-xs">
+                    Wallet: {formatUnits(balance, TOKEN_DECIMALS)} {TOKEN_SYMBOL}
+                  </p>
+                )}
+                <BuySoodButton size="block" />
+              </div>
+            )}
+            {payError && (
+              <p className="border-down/30 bg-down/10 text-down mt-3 rounded-lg border px-4 py-3 text-xs leading-relaxed">
+                {payError}
               </p>
             )}
             <p className="text-ink-3 mt-6 text-xs leading-relaxed">

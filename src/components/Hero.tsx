@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CARDS } from "@/lib/cards";
 import { HeroCardReel } from "@/components/HeroCardReel";
 import { TICKET_NAME } from "@/lib/ticket";
+import { BuySoodButton } from "@/components/BuySoodButton";
 import { ROUND_ENTRY_LABEL, TOKEN_SYMBOL } from "@/lib/token";
 
 const STATS = [
@@ -49,6 +50,7 @@ export function Hero() {
             >
               Mint {TICKET_NAME}
             </Link>
+            <BuySoodButton size="hero" />
             <Link
               href="/packs"
               className="border-line-bright text-ink hover:bg-surface-2 rounded-full border px-7 py-3.5 text-sm font-semibold transition-colors"

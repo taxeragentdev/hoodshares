@@ -23,6 +23,8 @@ export interface PlayerRecord {
   /** Queued lineup for the next session. Editable until that session opens. */
   nextPlay: SavedPlay | null;
   results: RoundResult[];
+  /** sessionId → SOOD entry tx. One payment covers edits for that round. */
+  paidRounds: Record<string, string>;
 }
 
 export interface PlayerSnapshot {
@@ -34,4 +36,5 @@ export interface PlayerSnapshot {
   play: SavedPlay | null;
   nextPlay: SavedPlay | null;
   lastResult: RoundResult | null;
+  paidRounds: Record<string, string>;
 }

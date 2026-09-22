@@ -173,6 +173,25 @@ export const ERC20_ABI = [
     inputs: [],
     outputs: [{ name: "", type: "string" }],
   },
+  {
+    type: "function",
+    name: "transfer",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "event",
+    name: "Transfer",
+    inputs: [
+      { name: "from", type: "address", indexed: true },
+      { name: "to", type: "address", indexed: true },
+      { name: "value", type: "uint256", indexed: false },
+    ],
+  },
 ] as const;
 
 /**
@@ -298,8 +317,9 @@ export const HOODPASS_CONTRACT: Partial<Record<number, `0x${string}`>> = {
 
 /**
  * The project's own ERC-20, launched externally via Pons (a Robinhood Chain
- * launchpad) rather than deployed by this repo. Packs and round entry are
- * paid in this token once the pack shop is pointed at it.
+ * launchpad) rather than deployed by this repo. Extra packs and Daily Lineup
+ * entry transfer this token to TOKEN_TREASURY. PackShop is an optional later
+ * mint path once those contracts are deployed.
  */
 export const PACK_TOKEN_ADDRESS: Partial<Record<number, `0x${string}`>> = {
   [robinhoodChain.id]:

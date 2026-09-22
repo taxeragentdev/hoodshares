@@ -41,7 +41,11 @@ interface AuthValue {
   openPack: () => Promise<OpenedCard[] | null>;
   savePlay: (
     play: SavedPlay,
-    opts: { intent: "save" | "lock"; lockedSlotId?: string },
+    opts: {
+      intent: "save" | "lock";
+      lockedSlotId?: string;
+      paymentTx?: `0x${string}`;
+    },
   ) => Promise<PlayerSnapshot>;
   settlePlay: () => Promise<PlayerSnapshot | null>;
 }
@@ -175,7 +179,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const savePlay = useCallback(
     async (
       play: SavedPlay,
-      opts: { intent: "save" | "lock"; lockedSlotId?: string },
+      opts: {
+        intent: "save" | "lock";
+        lockedSlotId?: string;
+        paymentTx?: `0x${string}`;
+      },
     ) => {
       const wallet = addressRef.current;
       if (!wallet) throw new Error("Connect a wallet first");
@@ -199,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           signature,
           intent: opts.intent,
           lockedSlotId: opts.lockedSlotId,
+          paymentTx: opts.paymentTx,
         }),
       });
       setPlayer(next);

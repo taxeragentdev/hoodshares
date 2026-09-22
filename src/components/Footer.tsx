@@ -1,3 +1,4 @@
+import { BuySoodButton } from "./BuySoodButton";
 import { Logo } from "./Logo";
 import { XMark, X_URL } from "./XLink";
 import { TOKEN_ADDRESS, TOKEN_SYMBOL, tokenExplorerUrl } from "@/lib/token";
@@ -61,6 +62,7 @@ export function Footer() {
               </span>
             </a>
             <div className="mt-4 flex flex-wrap items-center gap-2">
+              <BuySoodButton />
               <div className="border-line bg-surface-2 inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2">
                 <span className="bg-up h-1.5 w-1.5 animate-pulse rounded-full" />
                 <span className="text-ink-2 font-mono text-[11px] tracking-wider">

@@ -8,6 +8,7 @@ const emptyStore = (): StoreFile => ({
   quotes: {},
   ticketIssued: 0,
   creditedPackTxs: {},
+  creditedEntryTxs: {},
 });
 
 let client: ReturnType<typeof postgres> | null = null;
@@ -51,6 +52,7 @@ export async function readPostgresStore(): Promise<StoreFile> {
     quotes: payload.quotes ?? {},
     ticketIssued: payload.ticketIssued ?? 0,
     creditedPackTxs: payload.creditedPackTxs ?? {},
+    creditedEntryTxs: payload.creditedEntryTxs ?? {},
   };
 }
 

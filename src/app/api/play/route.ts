@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isHash, type Hash } from "viem";
 import type { LineupPick, SavedPlay } from "@/lib/game/types";
 import { LINEUP_SIZE } from "@/lib/game/types";
 import { sessionPhase } from "@/lib/game/session";
@@ -15,7 +16,9 @@ import {
   readLiveQuotesCached,
   sessionQuotes,
 } from "@/lib/server/prices";
-import { ensurePlayer, withStore } from "@/lib/server/store";
+import { readSoodTransfer } from "@/lib/server/soodPay";
+import { creditRoundEntry, ensurePlayer, withStore } from "@/lib/server/store";
+import { ROUND_ENTRY_LABEL, ROUND_ENTRY_WEI, TOKEN_SYMBOL } from "@/lib/token";
 
 export async function PUT(request: Request) {
   const address = await sessionAddress();
@@ -28,6 +31,7 @@ export async function PUT(request: Request) {
     signature?: string;
     intent?: PlayIntent;
     lockedSlotId?: string;
+    paymentTx?: string;
   };
   const play = body.play;
   if (!play || !Array.isArray(play.lineup) || play.lineup.length > LINEUP_SIZE) {
@@ -76,6 +80,21 @@ export async function PUT(request: Request) {
   const upcoming = nextSessionId();
   const market = sessionPhase();
 
+  let paidAmount: bigint | null = null;
+  if (intent === "save" && body.paymentTx && isHash(body.paymentTx)) {
+    const paid = await readSoodTransfer(body.paymentTx as Hash, address);
+    if ("error" in paid) {
+      return NextResponse.json({ error: paid.error }, { status: 400 });
+    }
+    if (paid.amount < ROUND_ENTRY_WEI) {
+      return NextResponse.json(
+        { error: `need ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL}` },
+        { status: 400 },
+      );
+    }
+    paidAmount = paid.amount;
+  }
+
   const outcome = await withStore((store) => {
     const record = ensurePlayer(store, address);
     syncPlayState(record, book);
@@ -102,6 +121,20 @@ export async function PUT(request: Request) {
         live,
       );
       return { ok: true as const, player: snapshot(record) };
+    }
+
+    const alreadyPaid = Boolean(record.paidRounds?.[upcoming]);
+    if (!alreadyPaid) {
+      if (!paidAmount || !body.paymentTx || !isHash(body.paymentTx)) {
+        return {
+          ok: false as const,
+          error: `Pay ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} to enter this round`,
+          status: 402,
+        };
+      }
+      if (!creditRoundEntry(store, record, body.paymentTx, upcoming)) {
+        return { ok: false as const, error: "entry tx already used", status: 409 };
+      }
     }
 
     record.nextPlay = {

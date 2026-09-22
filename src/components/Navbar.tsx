@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { BuySoodButton } from "./BuySoodButton";
 import { ConnectWalletButton } from "./ConnectWalletButton";
 import { Logo } from "./Logo";
 import { XLink } from "./XLink";
@@ -89,10 +90,11 @@ export function Navbar() {
         </ul>
 
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-          <XLink />
+          <XLink className="hidden sm:inline-flex" />
+          <BuySoodButton />
           <Link
             href="/mint"
-            className="border-acid/40 text-acid hover:bg-acid/10 rounded-full border px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors sm:px-4"
+            className="border-acid/40 text-acid hover:bg-acid/10 hidden rounded-full border px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors sm:inline-flex sm:px-4"
           >
             Get HoodPass
           </Link>
@@ -116,6 +118,9 @@ export function Navbar() {
       {open && (
         <div className="border-line bg-void/95 border-t lg:hidden">
           <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-3 sm:px-8">
+            <li className="px-3 py-2">
+              <BuySoodButton size="block" />
+            </li>
             {[...PLAY_LINKS, ...MORE_LINKS].map((link) => (
               <li key={link.href}>
                 <Link
