@@ -70,3 +70,13 @@ export function formatSessionLabel(sessionDay: string): string {
     timeZone: "UTC",
   }).format(sessionDateUtc(sessionDay));
 }
+
+/** Same session day for every wallet. Friday Sep 25, not "your round 1". */
+export function formatRoundDay(sessionDay: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(sessionDateUtc(sessionDay));
+}

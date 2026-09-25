@@ -21,7 +21,7 @@ import {
   SESSION_LABEL,
   type SessionPhase,
 } from "@/lib/game/session";
-import { formatSessionLabel, nextSessionId, sessionId } from "@/lib/game/sessionId";
+import { formatRoundDay, formatSessionLabel, nextSessionId, sessionId } from "@/lib/game/sessionId";
 import { LINEUP_SIZE, type LineupPick } from "@/lib/game/types";
 import { ROUND_ENTRY_LABEL, ROUND_ENTRY_WEI, TOKEN_SYMBOL } from "@/lib/token";
 
@@ -51,14 +51,67 @@ function pctFromBook(
 }
 
 export default function PlayPage() {
-  const { inventory, player, signedIn, savePlay, settlePlay } = useAuth();
+  const { player, signedIn } = useAuth();
+  const [market, setMarket] = useState<SessionPhase>("closed");
+  const [clockLabel, setClockLabel] = useState(SESSION_LABEL);
+
+  useEffect(() => {
+    const tick = () => {
+      const nextMarket = sessionPhase();
+      setMarket(nextMarket);
+      setClockLabel(sessionPhaseLabel(nextMarket));
+    };
+    const kick = window.setTimeout(tick, 0);
+    const id = window.setInterval(tick, 1000);
+    return () => {
+      window.clearTimeout(kick);
+      window.clearInterval(id);
+    };
+  }, []);
+
+  return (
+    <>
+      <Navbar />
+      <main className="bg-void mx-auto w-full max-w-5xl flex-1 px-5 py-14 sm:px-8">
+        <div className="mb-10 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="border-acid/30 bg-acid/10 text-acid inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
+              {SESSION_LABEL}
+            </span>
+            <span className="border-line bg-surface-2 text-ink inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
+              {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} to enter
+            </span>
+          </div>
+          <h1 className="font-display text-ink mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            Daily Lineup
+          </h1>
+          <p className="text-ink-3 mt-2 min-h-[1rem] font-mono text-xs">
+            {clockLabel}
+          </p>
+          <p className="text-ink-2 mx-auto mt-3 max-w-xl text-sm leading-relaxed">
+            The live round is locked except for the lock button. Build the next
+            round anytime. Each round is {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} from
+            Season 1. Score is that name&apos;s percent move from the 09:30 ET
+            open times 100.
+          </p>
+        </div>
+
+        <TicketGate title="Connect to play">
+          {signedIn && player ? <PlayDesk market={market} /> : null}
+        </TicketGate>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+function PlayDesk({ market }: { market: SessionPhase }) {
+  const { inventory, player, savePlay, settlePlay } = useAuth();
   const { pay, busy: paying } = useSoodPay();
+  const queued = player?.nextPlay;
   const [pendingPayTx, setPendingPayTx] = useState<`0x${string}` | null>(null);
-  const [lineup, setLineup] = useState<LineupPick[]>([]);
+  const [lineup, setLineup] = useState<LineupPick[]>(() => queued?.lineup ?? []);
   const [progress, setProgress] = useState(() => sessionProgress());
-  const [market, setMarket] = useState<SessionPhase>(() => sessionPhase());
-  const [clockLabel, setClockLabel] = useState<string | null>(() => sessionPhaseLabel());
-  const [hydrated, setHydrated] = useState(false);
   const [live, setLive] = useState<Record<string, number>>({});
   const [openPx, setOpenPx] = useState<Record<string, number>>({});
   const [closePx, setClosePx] = useState<Record<string, number>>({});
@@ -66,8 +119,7 @@ export default function PlayPage() {
   const [saving, setSaving] = useState(false);
   const [lockingSlotId, setLockingSlotId] = useState<string | null>(null);
   const [signError, setSignError] = useState<string | null>(null);
-  const slotCounter = useRef(0);
-  const restored = useRef(false);
+  const slotCounter = useRef(queued?.slotCounter ?? 0);
 
   const today = sessionId();
   const upcoming = nextSessionId();
@@ -80,8 +132,7 @@ export default function PlayPage() {
   const activeSettled = Boolean(
     activePlay && (activePlay.phase === "settled" || (sessionOver && activePlay.phase !== "building")),
   );
-  const activeNumber = player?.play?.roundNumber ?? 1;
-  const nextNumber = player?.nextPlay?.roundNumber ?? activeNumber + 1;
+  const nextNumber = (player?.play?.roundNumber ?? 1) + 1;
 
   const moves = useMemo(() => {
     const next: Record<string, number | null> = {};
@@ -99,34 +150,9 @@ export default function PlayPage() {
   }, [activePlay, live, openPx, closePx]);
 
   useEffect(() => {
-    function tick() {
-      const nextMarket = sessionPhase();
-      setMarket(nextMarket);
-      setClockLabel(sessionPhaseLabel(nextMarket));
-      setProgress(sessionProgress());
-    }
-    tick();
-    const id = window.setInterval(tick, 1000);
+    const id = window.setInterval(() => setProgress(sessionProgress()), 1000);
     return () => window.clearInterval(id);
   }, []);
-
-  useEffect(() => {
-    if (!signedIn) {
-      restored.current = false;
-      setHydrated(false);
-      setLineup([]);
-      return;
-    }
-    if (!player) return;
-    if (restored.current) return;
-    restored.current = true;
-    const queued = player.nextPlay;
-    if (queued) {
-      setLineup(queued.lineup);
-      slotCounter.current = queued.slotCounter || 0;
-    }
-    setHydrated(true);
-  }, [signedIn, player]);
 
   useEffect(() => {
     if (!activePlay) return;
@@ -171,9 +197,9 @@ export default function PlayPage() {
   }, [activeSettled, player?.address]);
 
   useEffect(() => {
-    if (!signedIn || !sessionOver) return;
+    if (!sessionOver) return;
     void settlePlay().catch(() => undefined);
-  }, [sessionOver, signedIn, settlePlay]);
+  }, [sessionOver, settlePlay]);
 
   const savedLineup = player?.nextPlay?.lineup ?? [];
   const lineupDirty = JSON.stringify(lineup) !== JSON.stringify(savedLineup);
@@ -269,120 +295,83 @@ export default function PlayPage() {
     return "This session is over. Set the next round below.";
   }
 
-  const displayNextNumber = player?.nextPlay?.roundNumber ?? nextNumber;
   const nextUnpaid = !player?.paidRounds?.[upcoming];
+  const activeDay =
+    market === "weekend" ? "Weekend" : formatRoundDay(activePlay?.roundId ?? today);
+  const nextDay = formatRoundDay(player?.nextPlay?.roundId ?? upcoming);
 
   return (
-    <>
-      <Navbar />
-      <main className="bg-void mx-auto w-full max-w-5xl flex-1 px-5 py-14 sm:px-8">
-        <div className="mb-10 text-center">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="border-acid/30 bg-acid/10 text-acid inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
-              {SESSION_LABEL}
-            </span>
-            <span className="border-line bg-surface-2 text-ink inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
-              {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} to enter
-            </span>
-          </div>
-          <h1 className="font-display text-ink mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            Daily Lineup
-          </h1>
-          <p className="text-ink-3 mt-2 min-h-[1rem] font-mono text-xs">
-            {clockLabel ?? "\u00a0"}
-          </p>
-          <p className="text-ink-2 mx-auto mt-3 max-w-xl text-sm leading-relaxed">
-            The live round is locked except for the lock button. Build the next
-            round anytime. Each round is {ROUND_ENTRY_LABEL} {TOKEN_SYMBOL} from
-            Season 1. Score is that name&apos;s percent move from the 09:30 ET
-            open times 100.
-          </p>
-        </div>
-
-        <TicketGate title="Connect to play">
-          {signError && (
-            <p className="text-down mb-4 text-center text-xs leading-relaxed">{signError}</p>
-          )}
-          {!hydrated && signedIn && (
-            <p className="text-ink-3 py-16 text-center font-mono text-xs tracking-wide">
-              Loading your cards…
-            </p>
-          )}
-
-          {hydrated && (
-            <div className="space-y-6">
-              <RoundSection label="Active round" number={activeNumber}>
-                {activeLive && activePlay ? (
-                  <ActiveRound
-                    embedded
-                    lineup={activePlay.lineup}
-                    moves={moves}
-                    progress={progress}
-                    timeLeftLabel={formatTimeLeft(msUntilSessionClose())}
-                    onLock={(slotId) => void handleLock(slotId)}
-                    lockingSlotId={lockingSlotId}
-                  />
-                ) : activeSettled && activePlay ? (
-                  <RoundSummary
-                    embedded
-                    lineup={activePlay.lineup}
-                    moves={moves}
-                    rank={rank}
-                  />
-                ) : (
-                  <div>
-                    <div className="grid grid-cols-5 gap-2 sm:gap-3">
-                      {Array.from({ length: LINEUP_SIZE }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="border-line/60 aspect-[5/8] rounded-xl border border-dashed"
-                        />
-                      ))}
-                    </div>
-                    <p className="text-ink-2 mt-4 max-w-xl text-sm leading-relaxed">
-                      {activeEmptyCopy()}
-                    </p>
-                  </div>
-                )}
-              </RoundSection>
-
-              <RoundSection label="Next round" number={displayNextNumber}>
-                {nextUnpaid && (
-                  <div className="border-acid/30 bg-acid/8 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3">
-                    <p className="text-ink-2 max-w-md text-xs leading-relaxed">
-                      First save for this round sends {ROUND_ENTRY_LABEL}{" "}
-                      {TOKEN_SYMBOL} to the treasury. Edits after that are free.
-                    </p>
-                    <BuySoodButton />
-                  </div>
-                )}
-                <LineupBuilder
-                  bare
-                  lineup={lineup}
-                  owned={inventory.cards}
-                  onAdd={handleAdd}
-                  onRemove={handleRemove}
-                  onToggleDirection={handleToggleDirection}
-                  onStart={() => void handleSaveNext()}
-                  startLabel={
-                    alreadySaved && !lineupDirty
-                      ? "Lineup saved"
-                      : nextUnpaid
-                        ? `Pay ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} and save`
-                        : lineupDirty && alreadySaved
-                          ? "Save changes"
-                          : "Save picks"
-                  }
-                  startEnabled={lineupDirty || !alreadySaved}
-                  startBusy={saving || paying}
-                  hint={`Plays ${formatSessionLabel(upcoming)} from 09:30 ET. Each unpaid round is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} from your wallet. Then you sign the lineup.`}
+    <div className="space-y-6">
+      {signError && (
+        <p className="text-down text-center text-xs leading-relaxed">{signError}</p>
+      )}
+      <RoundSection label="Active round" day={activeDay}>
+        {activeLive && activePlay ? (
+          <ActiveRound
+            embedded
+            lineup={activePlay.lineup}
+            moves={moves}
+            progress={progress}
+            timeLeftLabel={formatTimeLeft(msUntilSessionClose())}
+            onLock={(slotId) => void handleLock(slotId)}
+            lockingSlotId={lockingSlotId}
+          />
+        ) : activeSettled && activePlay ? (
+          <RoundSummary
+            embedded
+            lineup={activePlay.lineup}
+            moves={moves}
+            rank={rank}
+          />
+        ) : (
+          <div>
+            <div className="grid grid-cols-5 gap-2 sm:gap-3">
+              {Array.from({ length: LINEUP_SIZE }).map((_, i) => (
+                <div
+                  key={i}
+                  className="border-line/60 aspect-[5/8] rounded-xl border border-dashed"
                 />
-              </RoundSection>
+              ))}
             </div>
-          )}
-        </TicketGate>
-      </main>
-      <Footer />
-    </>
+            <p className="text-ink-2 mt-4 max-w-xl text-sm leading-relaxed">
+              {activeEmptyCopy()}
+            </p>
+          </div>
+        )}
+      </RoundSection>
+
+      <RoundSection label="Next round" day={nextDay}>
+        {nextUnpaid && (
+          <div className="border-acid/30 bg-acid/8 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3">
+            <p className="text-ink-2 max-w-md text-xs leading-relaxed">
+              First save for this round sends {ROUND_ENTRY_LABEL}{" "}
+              {TOKEN_SYMBOL} to the treasury. Edits after that are free.
+            </p>
+            <BuySoodButton />
+          </div>
+        )}
+        <LineupBuilder
+          bare
+          lineup={lineup}
+          owned={inventory.cards}
+          onAdd={handleAdd}
+          onRemove={handleRemove}
+          onToggleDirection={handleToggleDirection}
+          onStart={() => void handleSaveNext()}
+          startLabel={
+            alreadySaved && !lineupDirty
+              ? "Lineup saved"
+              : nextUnpaid
+                ? `Pay ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} and save`
+                : lineupDirty && alreadySaved
+                  ? "Save changes"
+                  : "Save picks"
+          }
+          startEnabled={lineupDirty || !alreadySaved}
+          startBusy={saving || paying}
+          hint={`Plays ${formatSessionLabel(upcoming)} from 09:30 ET. Each unpaid round is ${ROUND_ENTRY_LABEL} ${TOKEN_SYMBOL} from your wallet. Then you sign the lineup.`}
+        />
+      </RoundSection>
+    </div>
   );
 }

@@ -46,9 +46,7 @@ export function LineupBuilder({
     return () => document.removeEventListener("keydown", handleKey);
   }, [pickerOpen]);
 
-  useEffect(() => {
-    if (isFull) setPickerOpen(false);
-  }, [isFull]);
+  const showPicker = pickerOpen && !isFull;
 
   if (held.length === 0) {
     return (
@@ -177,7 +175,7 @@ export function LineupBuilder({
         />
       </div>
 
-      {pickerOpen && (
+      {showPicker && (
         <CardPicker
           cards={held}
           remainingFor={remainingFor}

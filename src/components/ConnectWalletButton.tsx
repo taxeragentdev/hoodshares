@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useClientReady } from "@/components/useClientReady";
 import {
   useAccount,
   useConnect,
@@ -22,12 +23,8 @@ export function ConnectWalletButton() {
   const { status, signing, signIn } = useAuth();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useClientReady();
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;

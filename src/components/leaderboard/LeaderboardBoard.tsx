@@ -28,7 +28,7 @@ export function LeaderboardBoard() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setPhase(sessionPhase());
+    const kick = window.setTimeout(() => setPhase(sessionPhase()), 0);
     let cancelled = false;
     void api<{ board: LeaderboardRow[] }>("/api/leaderboard")
       .then((data) => {
@@ -42,6 +42,7 @@ export function LeaderboardBoard() {
       });
     return () => {
       cancelled = true;
+      window.clearTimeout(kick);
     };
   }, []);
 
@@ -59,7 +60,7 @@ export function LeaderboardBoard() {
         <StatCard
           label="This week's pool"
           value={`${SESSION_PRIZE_POOL.toLocaleString("en-US")} ${REWARD_TOKEN}`}
-          hint="Paid once a week after Friday's close"
+          hint="Paid once a week after Friday’s close"
         />
         <StatCard
           label="Field"
@@ -96,8 +97,8 @@ export function LeaderboardBoard() {
         <div className="border-line bg-surface-2 rounded-2xl border px-6 py-16 text-center">
           <h2 className="font-display text-ink text-xl font-bold">No scores yet</h2>
           <p className="text-ink-2 mx-auto mt-2 max-w-md text-sm leading-relaxed">
-            This week's board adds each Daily Lineup score from Monday to
-            Friday. {REWARD_TOKEN} pays after Friday's 16:00 ET close.
+            This week&apos;s board adds each Daily Lineup score from Monday to
+            Friday. {REWARD_TOKEN} pays after Friday&apos;s 16:00 ET close.
           </p>
           <Link
             href="/play"
@@ -141,7 +142,7 @@ export function LeaderboardBoard() {
       )}
 
       <p className="text-ink-3 text-center text-xs leading-relaxed">
-        After Friday's close, the top ten split a weekly {REWARD_TOKEN} pool.{" "}
+        After Friday&apos;s close, the top ten split a weekly {REWARD_TOKEN} pool.{" "}
         <Link href="/play" className="text-ink hover:text-acid underline-offset-2 hover:underline">
           Run a lineup
         </Link>

@@ -11,7 +11,7 @@ export default function LeaderboardPage() {
       <main className="bg-void mx-auto w-full max-w-6xl flex-1 px-5 py-14 sm:px-8">
         <div className="mb-10 max-w-2xl">
           <span className="border-acid/30 bg-acid/10 text-acid inline-block rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase">
-            This week's board
+            This week&apos;s board
           </span>
           <h1 className="font-display text-ink mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
             Weekly leaderboard

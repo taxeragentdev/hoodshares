@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAccount, useSignMessage } from "wagmi";
+import { useClientReady } from "@/components/useClientReady";
 import { api, ApiError, type OpenPackResponse } from "@/lib/api";
 import {
   EMPTY_INVENTORY,
@@ -53,7 +54,9 @@ interface AuthValue {
 const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { address, status: walletStatus } = useAccount();
+  const clientReady = useClientReady();
+  const { address: rawAddress, status: walletStatus } = useAccount();
+  const address = clientReady ? rawAddress : undefined;
   const { signMessageAsync } = useSignMessage();
   const [status, setStatus] = useState<AuthStatus>("boot");
   const [player, setPlayer] = useState<PlayerSnapshot | null>(null);
@@ -62,7 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const autoTried = useRef<string | null>(null);
   const sawWallet = useRef(false);
   const addressRef = useRef(address);
-  addressRef.current = address;
+
+  useEffect(() => {
+    addressRef.current = address;
+  }, [address]);
 
   const bootstrap = useCallback(async (wallet: `0x${string}`) => {
     setStatus("boot");
@@ -120,8 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (walletStatus === "connecting" || walletStatus === "reconnecting") return;
     if (!address) {
       autoTried.current = null;
-      setPlayer(null);
-      setStatus("guest");
       if (sawWallet.current && walletStatus === "disconnected") {
         sawWallet.current = false;
         void fetch("/api/auth/logout", { method: "POST", credentials: "include" });
@@ -129,8 +133,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     sawWallet.current = true;
-    void bootstrap(address);
+    const timer = window.setTimeout(() => {
+      void bootstrap(address);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [address, walletStatus, bootstrap]);
+
+  const waitingWallet =
+    walletStatus === "connecting" || walletStatus === "reconnecting";
+  const displayStatus: AuthStatus = !address
+    ? waitingWallet
+      ? "boot"
+      : "guest"
+    : status;
+  const displayPlayer = address ? player : null;
 
   useEffect(() => {
     if (status !== "need-sign" || !address) return;
@@ -224,11 +240,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthValue>(
     () => ({
-      status,
-      player,
-      inventory: player?.inventory ?? EMPTY_INVENTORY,
-      ready: status === "guest" || status === "need-sign" || status === "ready",
-      signedIn: status === "ready",
+      status: displayStatus,
+      player: displayPlayer,
+      inventory: displayPlayer?.inventory ?? EMPTY_INVENTORY,
+      ready:
+        displayStatus === "guest" ||
+        displayStatus === "need-sign" ||
+        displayStatus === "ready",
+      signedIn: displayStatus === "ready",
       signing,
       error,
       signIn,
@@ -240,7 +259,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       savePlay,
       settlePlay,
     }),
-    [status, player, signing, error, signIn, mintPack, claimTicket, syncTicket, creditPaidPack, openPack, savePlay, settlePlay],
+    [
+      displayStatus,
+      displayPlayer,
+      signing,
+      error,
+      signIn,
+      mintPack,
+      claimTicket,
+      syncTicket,
+      creditPaidPack,
+      openPack,
+      savePlay,
+      settlePlay,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
